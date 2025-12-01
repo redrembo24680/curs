@@ -1,0 +1,598 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+{% block content %}
+<section class="section intro">
+    <div>
+    <h1>Статистика системи</h1>
+        <p class="muted">Детальна статистика гравців та матчів</p>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <div class="card">
+        <h2>🏆 Топ-10 гравців</h2>
+        {% if top_players %}
+        <div class="top-players-list">
+            {% for player in top_players %}
+            <div class="player-stat-item {% if loop.index <= 3 %}top-three{% endif %}">
+                <div class="player-rank">
+                    <span class="rank-number">{{ loop.index }}</span>
+                    {% if loop.index == 1 %}
+                        <span class="rank-icon">🥇</span>
+                    {% elif loop.index == 2 %}
+                        <span class="rank-icon">🥈</span>
+                    {% elif loop.index == 3 %}
+                        <span class="rank-icon">🥉</span>
+                    {% endif %}
+                </div>
+                <div class="player-info-stat">
+                    <div class="player-name-stat">{{ player.name }}</div>
+                    <div class="player-position-stat">{{ player.position }}</div>
+                </div>
+                <div class="player-votes-stat">
+                    <span class="votes-count">{{ player.votes }}</span>
+                    <span class="votes-label">голосів</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p class="muted">Недостатньо даних для побудови рейтингу.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>📊 Статистика матчів</h2>
+        {% if matches %}
+            <div style="margin-bottom: 1.5rem;">
+                <label for="match-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text);">Оберіть матч:</label>
+                <select id="match-select" onchange="window.location.href='/stats?match_id=' + this.value" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; background: white; color: var(--text);">
+                    <option value="">-- Всі матчі --</option>
+                    {% for match in matches %}
+                        <option value="{{ match.get('match_id', match.get('id', 0)) }}" {% if selected_match_id and match.get('match_id', match.get('id', 0)) == selected_match_id %}selected{% endif %}>
+                            {{ match.team1 }} vs {{ match.team2 }} ({{ match.date }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            {% if selected_match %}
+                <div class="matches-stats-list">
+                    {% set match = selected_match %}
+                <div class="match-stat-card {% if match.get('is_active', match.get('isActive', False)) %}active{% else %}finished{% endif %}">
+                    <div class="match-header-stat">
+                        <div class="match-teams">
+                            <span class="team-name team1">{{ match.team1 }}</span>
+                            <span class="match-score">
+                                <span class="score-value team1-score">{{ match.get('team1_goals', 0) }}</span>
+                                <span class="score-separator">:</span>
+                                <span class="score-value team2-score">{{ match.get('team2_goals', 0) }}</span>
+                            </span>
+                            <span class="team-name team2">{{ match.team2 }}</span>
+                        </div>
+                        <div class="match-status-badge {% if match.get('is_active', match.get('isActive', False)) %}status-active{% else %}status-finished{% endif %}">
+                            {{ "Активний" if match.get('is_active', match.get('isActive', False)) else "Завершено" }}
+                        </div>
+                    </div>
+                    
+                    <div class="match-date-stat">
+                        <span class="date-icon">📅</span>
+                        {{ match.date }}
+                    </div>
+                    
+                    <!-- Player Votes Section -->
+                    <div class="player-votes-section">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: var(--text);">Голоси за гравців</h4>
+                        <div class="match-stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-value">{{ match.get('total_votes', 0) }}</div>
+                                <div class="stat-label">Всього голосів</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value">{{ match.get('unique_voters', 0) }}</div>
+                                <div class="stat-label">Унікальних голосів</div>
+                            </div>
+                        </div>
+                        
+                        {% if match.get('team1_votes') is not none and match.get('team2_votes') is not none %}
+                        <div class="match-votes-breakdown">
+                            <div class="team-votes">
+                                <div class="team-vote-item">
+                                    <span class="team-vote-name">{{ match.team1 }}</span>
+                                    <div class="vote-bar-container">
+                                        <div class="vote-bar team1-bar" style="width: {% if match.get('total_votes', 0) > 0 %}{{ (match.get('team1_votes', 0) / match.get('total_votes', 1) * 100) }}{% else %}0{% endif %}%"></div>
+                                    </div>
+                                    <span class="team-vote-count">{{ match.get('team1_votes', 0) }}</span>
+                                </div>
+                                <div class="team-vote-item">
+                                    <span class="team-vote-name">{{ match.team2 }}</span>
+                                    <div class="vote-bar-container">
+                                        <div class="vote-bar team2-bar" style="width: {% if match.get('total_votes', 0) > 0 %}{{ (match.get('team2_votes', 0) / match.get('total_votes', 1) * 100) }}{% else %}0{% endif %}%"></div>
+                                    </div>
+                                    <span class="team-vote-count">{{ match.get('team2_votes', 0) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    
+                    {% if match.get('most_voted_player') and match.get('most_voted_player_votes') %}
+                    <div class="most-voted-player">
+                        <span class="star-icon">⭐</span>
+                        <span class="most-voted-text">Найбільше голосів: <strong>{{ match.get('most_voted_player', 'Немає') }}</strong> ({{ match.get('most_voted_player_votes', 0) }})</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Match Statistics -->
+                    <div class="match-detailed-stats">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: var(--text);">Статистика матчу</h4>
+                        
+                        <!-- Goals -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Голи</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_goals', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_goals', 0) }}</div>
+                        </div>
+                        
+                        <!-- Possession -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Володіння м'ячем</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_possession', 50) }}%</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_possession', 50) }}%</div>
+                        </div>
+                        <div class="possession-bar">
+                            <div class="possession-bar-fill team1" style="width: {{ match.get('team1_possession', 50) }}%"></div>
+                            <div class="possession-bar-fill team2" style="width: {{ match.get('team2_possession', 50) }}%"></div>
+                        </div>
+                        
+                        <!-- Shots -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Удари</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_shots', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_shots', 0) }}</div>
+                        </div>
+                        
+                        <!-- Shots on Target -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Удари в ціль</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_shots_on_target', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_shots_on_target', 0) }}</div>
+                        </div>
+                        
+                        <!-- Corners -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Кутові</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_corners', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_corners', 0) }}</div>
+                        </div>
+                        
+                        <!-- Fouls -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Порушення</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_fouls', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_fouls', 0) }}</div>
+                        </div>
+                        
+                        <!-- Cards -->
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Жовті картки</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_yellow_cards', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_yellow_cards', 0) }}</div>
+                        </div>
+                        <div class="stats-row-detailed">
+                            <div class="stat-label-detailed">Червоні картки</div>
+                            <div class="stat-value-detailed team1-stat">{{ match.get('team1_red_cards', 0) }}</div>
+                            <div class="stat-value-detailed team2-stat">{{ match.get('team2_red_cards', 0) }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Actions -->
+                    {% if current_user and current_user.role == 'admin' %}
+                    <div class="admin-actions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e5e7eb;">
+                        <button onclick="openEditStatsModal({{ match.get('match_id', match.get('id', 0)) }}, '{{ match.team1|e }}', '{{ match.team2|e }}')" 
+                                class="btn btn-primary small" style="margin-right: 0.5rem;">
+                            Редагувати статистику
+                        </button>
+                        {% if match.get('is_active', match.get('isActive', False)) %}
+                        <form method="post" action="{{ url_for('stats.close_match') }}" style="display: inline;">
+                            <input type="hidden" name="match_id" value="{{ match.get('match_id', match.get('id', 0)) }}">
+                            <button type="submit" class="btn btn-danger small" 
+                                    onclick="return confirm('Ви впевнені, що хочете завершити цей матч? Голосування буде припинено.');">
+                                Завершити матч
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+                <div class="matches-stats-list">
+                {% for match in matches %}
+                    <div class="match-stat-card {% if match.get('is_active', match.get('isActive', False)) %}active{% else %}finished{% endif %}">
+                        <div class="match-header-stat">
+                            <div class="match-teams">
+                                <span class="team-name team1">{{ match.team1 }}</span>
+                                <span class="match-score">
+                                    <span class="score-value team1-score">{{ match.get('team1_goals', 0) }}</span>
+                                    <span class="score-separator">:</span>
+                                    <span class="score-value team2-score">{{ match.get('team2_goals', 0) }}</span>
+                                </span>
+                                <span class="team-name team2">{{ match.team2 }}</span>
+                            </div>
+                            <div class="match-status-badge {% if match.get('is_active', match.get('isActive', False)) %}status-active{% else %}status-finished{% endif %}">
+                                {{ "Активний" if match.get('is_active', match.get('isActive', False)) else "Завершено" }}
+                            </div>
+                        </div>
+                        
+                        <div class="match-date-stat">
+                            <span class="date-icon">📅</span>
+                            {{ match.date }}
+                        </div>
+                        
+                        <!-- Player Votes Section -->
+                        <div class="player-votes-section">
+                            <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: var(--text);">Голоси за гравців</h4>
+                            <div class="match-stats-grid">
+                                <div class="stat-box">
+                                    <div class="stat-value">{{ match.get('total_votes', 0) }}</div>
+                                    <div class="stat-label">Всього голосів</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value">{{ match.get('unique_voters', 0) }}</div>
+                                    <div class="stat-label">Унікальних голосів</div>
+                                </div>
+                            </div>
+                            
+                            {% if match.get('team1_votes') is not none and match.get('team2_votes') is not none %}
+                            <div class="match-votes-breakdown">
+                                <div class="team-votes">
+                                    <div class="team-vote-item">
+                                        <span class="team-vote-name">{{ match.team1 }}</span>
+                                        <div class="vote-bar-container">
+                                            <div class="vote-bar team1-bar" style="width: {% if match.get('total_votes', 0) > 0 %}{{ (match.get('team1_votes', 0) / match.get('total_votes', 1) * 100) }}{% else %}0{% endif %}%"></div>
+                                        </div>
+                                        <span class="team-vote-count">{{ match.get('team1_votes', 0) }}</span>
+                                    </div>
+                                    <div class="team-vote-item">
+                                        <span class="team-vote-name">{{ match.team2 }}</span>
+                                        <div class="vote-bar-container">
+                                            <div class="vote-bar team2-bar" style="width: {% if match.get('total_votes', 0) > 0 %}{{ (match.get('team2_votes', 0) / match.get('total_votes', 1) * 100) }}{% else %}0{% endif %}%"></div>
+                                        </div>
+                                        <span class="team-vote-count">{{ match.get('team2_votes', 0) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        
+                        {% if match.get('most_voted_player') and match.get('most_voted_player_votes') %}
+                        <div class="most-voted-player">
+                            <span class="star-icon">⭐</span>
+                            <span class="most-voted-text">Найбільше голосів: <strong>{{ match.get('most_voted_player', 'Немає') }}</strong> ({{ match.get('most_voted_player_votes', 0) }})</span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Match Statistics -->
+                        <div class="match-detailed-stats">
+                            <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: var(--text);">Статистика матчу</h4>
+                            
+                            <!-- Goals -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Голи</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_goals', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_goals', 0) }}</div>
+                            </div>
+                            
+                            <!-- Possession -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Володіння м'ячем</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_possession', 50) }}%</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_possession', 50) }}%</div>
+                            </div>
+                            <div class="possession-bar">
+                                <div class="possession-bar-fill team1" style="width: {{ match.get('team1_possession', 50) }}%"></div>
+                                <div class="possession-bar-fill team2" style="width: {{ match.get('team2_possession', 50) }}%"></div>
+                            </div>
+                            
+                            <!-- Shots -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Удари</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_shots', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_shots', 0) }}</div>
+                            </div>
+                            
+                            <!-- Shots on Target -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Удари в ціль</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_shots_on_target', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_shots_on_target', 0) }}</div>
+                            </div>
+                            
+                            <!-- Corners -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Кутові</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_corners', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_corners', 0) }}</div>
+                            </div>
+                            
+                            <!-- Fouls -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Порушення</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_fouls', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_fouls', 0) }}</div>
+                            </div>
+                            
+                            <!-- Cards -->
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Жовті картки</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_yellow_cards', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_yellow_cards', 0) }}</div>
+                            </div>
+                            <div class="stats-row-detailed">
+                                <div class="stat-label-detailed">Червоні картки</div>
+                                <div class="stat-value-detailed team1-stat">{{ match.get('team1_red_cards', 0) }}</div>
+                                <div class="stat-value-detailed team2-stat">{{ match.get('team2_red_cards', 0) }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Admin Actions -->
+                        {% if current_user and current_user.role == 'admin' %}
+                        <div class="admin-actions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e5e7eb;">
+                            <button onclick="openEditStatsModal({{ match.get('match_id', match.get('id', 0)) }}, '{{ match.team1|e }}', '{{ match.team2|e }}')" 
+                                    class="btn btn-primary small" style="margin-right: 0.5rem;">
+                                Редагувати статистику
+                            </button>
+                            {% if match.get('is_active', match.get('isActive', False)) %}
+                            <form method="post" action="{{ url_for('stats.close_match') }}" style="display: inline;">
+                                <input type="hidden" name="match_id" value="{{ match.get('match_id', match.get('id', 0)) }}">
+                                <button type="submit" class="btn btn-danger small" 
+                                        onclick="return confirm('Ви впевнені, що хочете завершити цей матч? Голосування буде припинено.');">
+                                    Завершити матч
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="muted">Матчі ще не проводилися.</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Edit Stats Modal -->
+<div id="editStatsModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="modal-close" onclick="closeEditStatsModal()">&times;</span>
+        <div style="padding: 2rem;">
+            <h2 style="margin-top: 0;">Редагувати статистику матчу</h2>
+            <p id="modalMatchTeams" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text);"></p>
+            
+            <form method="post" action="{{ url_for('stats.update_match_stats') }}" id="editStatsForm">
+                <input type="hidden" name="match_id" id="modalMatchId">
+                
+                <div class="stats-edit-grid">
+                    <div class="stats-edit-section">
+                        <h3 style="color: #ef4444; margin-bottom: 1rem;">Команда 1</h3>
+                        
+                        <div class="form-group">
+                            <label>Голи</label>
+                            <input type="number" name="team1_goals" id="team1_goals" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Володіння м'ячем (%)</label>
+                            <input type="number" name="team1_possession" id="team1_possession" min="0" max="100" value="50" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Удари</label>
+                            <input type="number" name="team1_shots" id="team1_shots" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Удари в ціль</label>
+                            <input type="number" name="team1_shots_on_target" id="team1_shots_on_target" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Кутові</label>
+                            <input type="number" name="team1_corners" id="team1_corners" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Порушення</label>
+                            <input type="number" name="team1_fouls" id="team1_fouls" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Жовті картки</label>
+                            <input type="number" name="team1_yellow_cards" id="team1_yellow_cards" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Червоні картки</label>
+                            <input type="number" name="team1_red_cards" id="team1_red_cards" min="0" value="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-edit-section">
+                        <h3 style="color: #3b82f6; margin-bottom: 1rem;">Команда 2</h3>
+                        
+                        <div class="form-group">
+                            <label>Голи</label>
+                            <input type="number" name="team2_goals" id="team2_goals" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Володіння м'ячем (%)</label>
+                            <input type="number" name="team2_possession" id="team2_possession" min="0" max="100" value="50" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Удари</label>
+                            <input type="number" name="team2_shots" id="team2_shots" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Удари в ціль</label>
+                            <input type="number" name="team2_shots_on_target" id="team2_shots_on_target" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Кутові</label>
+                            <input type="number" name="team2_corners" id="team2_corners" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Порушення</label>
+                            <input type="number" name="team2_fouls" id="team2_fouls" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Жовті картки</label>
+                            <input type="number" name="team2_yellow_cards" id="team2_yellow_cards" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Червоні картки</label>
+                            <input type="number" name="team2_red_cards" id="team2_red_cards" min="0" value="0" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeEditStatsModal()" class="btn" style="background: #6b7280; color: #fff;">
+                        Скасувати
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Зберегти статистику
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openEditStatsModal(matchId, team1, team2) {
+    console.log('Opening edit stats modal for match:', matchId);
+    
+    const modal = document.getElementById('editStatsModal');
+    if (!modal) {
+        console.error('Modal element not found!');
+        alert('Помилка: модальне вікно не знайдено');
+        return;
+    }
+    
+    const modalMatchId = document.getElementById('modalMatchId');
+    const modalMatchTeams = document.getElementById('modalMatchTeams');
+    
+    if (!modalMatchId || !modalMatchTeams) {
+        console.error('Modal form elements not found!');
+        alert('Помилка: елементи форми не знайдено');
+        return;
+    }
+    
+    modalMatchId.value = matchId;
+    modalMatchTeams.textContent = team1 + ' vs ' + team2;
+    
+    // Load current stats
+    fetch(`/api/match-stats/${matchId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Loaded stats:', data);
+            // Always set values, even if undefined
+            document.getElementById('team1_goals').value = data.team1_goals || 0;
+            document.getElementById('team1_possession').value = data.team1_possession || 50;
+            document.getElementById('team1_shots').value = data.team1_shots || 0;
+            document.getElementById('team1_shots_on_target').value = data.team1_shots_on_target || 0;
+            document.getElementById('team1_corners').value = data.team1_corners || 0;
+            document.getElementById('team1_fouls').value = data.team1_fouls || 0;
+            document.getElementById('team1_yellow_cards').value = data.team1_yellow_cards || 0;
+            document.getElementById('team1_red_cards').value = data.team1_red_cards || 0;
+            
+            document.getElementById('team2_goals').value = data.team2_goals || 0;
+            document.getElementById('team2_possession').value = data.team2_possession || 50;
+            document.getElementById('team2_shots').value = data.team2_shots || 0;
+            document.getElementById('team2_shots_on_target').value = data.team2_shots_on_target || 0;
+            document.getElementById('team2_corners').value = data.team2_corners || 0;
+            document.getElementById('team2_fouls').value = data.team2_fouls || 0;
+            document.getElementById('team2_yellow_cards').value = data.team2_yellow_cards || 0;
+            document.getElementById('team2_red_cards').value = data.team2_red_cards || 0;
+            
+            // Validate possession
+            updatePossessionValidation();
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+            // Set defaults if error
+            document.getElementById('team1_goals').value = 0;
+            document.getElementById('team1_possession').value = 50;
+            document.getElementById('team1_shots').value = 0;
+            document.getElementById('team1_shots_on_target').value = 0;
+            document.getElementById('team1_corners').value = 0;
+            document.getElementById('team1_fouls').value = 0;
+            document.getElementById('team1_yellow_cards').value = 0;
+            document.getElementById('team1_red_cards').value = 0;
+            
+            document.getElementById('team2_goals').value = 0;
+            document.getElementById('team2_possession').value = 50;
+            document.getElementById('team2_shots').value = 0;
+            document.getElementById('team2_shots_on_target').value = 0;
+            document.getElementById('team2_corners').value = 0;
+            document.getElementById('team2_fouls').value = 0;
+            document.getElementById('team2_yellow_cards').value = 0;
+            document.getElementById('team2_red_cards').value = 0;
+        });
+    
+    modal.style.display = 'block';
+    
+    // Validate possession adds up to 100
+    function updatePossessionValidation() {
+        const team1Poss = document.getElementById('team1_possession');
+        const team2Poss = document.getElementById('team2_possession');
+        
+        function updatePossession() {
+            const t1 = parseInt(team1Poss.value) || 0;
+            const t2 = parseInt(team2Poss.value) || 0;
+            if (t1 + t2 !== 100) {
+                team2Poss.setCustomValidity(`Сума повинна дорівнювати 100% (зараз: ${t1 + t2}%)`);
+            } else {
+                team2Poss.setCustomValidity('');
+            }
+        }
+        
+        // Remove old listeners and add new ones
+        const newTeam1Poss = team1Poss.cloneNode(true);
+        const newTeam2Poss = team2Poss.cloneNode(true);
+        team1Poss.parentNode.replaceChild(newTeam1Poss, team1Poss);
+        team2Poss.parentNode.replaceChild(newTeam2Poss, team2Poss);
+        
+        newTeam1Poss.addEventListener('input', updatePossession);
+        newTeam2Poss.addEventListener('input', updatePossession);
+        updatePossession(); // Initial validation
+    }
+    
+    updatePossessionValidation();
+}
+
+function closeEditStatsModal() {
+    document.getElementById('editStatsModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('editStatsModal');
+    if (event.target === modal) {
+        closeEditStatsModal();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}Матчі{% endblock %}
+{% block content %}
+<section class="section grid-two">
+    <div class="card">
+        <h2>Новий матч</h2>
+        {% if current_user and current_user.role == 'admin' %}
+            <form method="post" action="{{ url_for('matches.add_match') }}" class="form">
+                <label for="team1">Команда господарів</label>
+                <select id="team1" name="team1" required>
+                    <option value="">Обрати...</option>
+                    {% for team in teams %}
+                        <option value="{{ team.name }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="team2">Команда гостей</label>
+                <select id="team2" name="team2" required>
+                    <option value="">Обрати...</option>
+                    {% for team in teams %}
+                        <option value="{{ team.name }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn primary">Створити матч</button>
+            </form>
+        {% else %}
+            <p class="muted">Створювати матчі може лише адміністратор. Використайте логін <code>admin</code> та пароль <code>admin123</code>.</p>
+        {% endif %}
+    </div>
+    <div class="card">
+        <h2>Порада</h2>
+        <p>Створюйте матчі завчасно та поділіться посиланням на головну сторінку, щоб уболівальники голосували під час гри.</p>
+    </div>
+</section>
+
+<section class="section">
+    <h2>Оберіть матч для голосування</h2>
+    {% if matches %}
+        <div class="card" style="margin-bottom: 2rem;">
+            <form method="get" class="form-inline">
+                <label for="match_id" style="margin-right: 1rem;">Матч:</label>
+                <select name="match_id" id="match_id" onchange="this.form.submit()" style="flex-grow: 1;">
+                    {% for match in matches %}
+                        <option value="{{ match.id }}" {% if match.id == selected_match_id %}selected{% endif %}>
+                            {{ match.team1 }} vs {{ match.team2 }} ({{ match.date }}) - {% if match.isActive %}Активний{% else %}Завершено{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    {% else %}
+        <p class="muted">Немає створених матчів.</p>
+    {% endif %}
+</section>
+
+{% if selected_match_id and (home_roster or away_roster) %}
+<section class="section grid-two">
+    <div class="card scoreboard">
+        {% if home_team or away_team %}
+            <div class="score-row">
+                <div class="score-item">
+                    <span class="score-label">{{ home_team.name if home_team else 'Team 1' }}</span>
+                    <span class="score-val">{{ home_total }}</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">VS</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">{{ away_team.name if away_team else 'Team 2' }}</span>
+                    <span class="score-val">{{ away_total }}</span>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if not current_user %}
+            <p class="muted" style="text-align: center; font-size: 0.85rem; margin-top: 1rem;">
+                <a href="{{ url_for('auth.login') }}">Увійдіть</a>, щоб голосувати.
+            </p>
+        {% elif user_has_voted %}
+            <p class="muted" style="text-align: center; font-size: 0.85rem; margin-top: 1rem; color: #10b981;">
+                ✓ Ви вже проголосували в цьому матчі
+            </p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section pitch-section">
+    <div class="card pitch-card">
+        <div class="team-labels">
+            <div class="team-label home">
+                <div class="dot" style="width: 12px; height: 12px; background: #ef4444; border-radius: 50%; display: inline-block; margin-right: 8px;"></div>
+                <span>{{ home_team.name if home_team else 'Господарі' }}</span>
+            </div>
+            <div class="team-label away">
+                <span>{{ away_team.name if away_team else 'Гості' }}</span>
+                <div class="dot" style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; display: inline-block; margin-left: 8px;"></div>
+            </div>
+        </div>
+        
+        <div class="pitch-container">
+            <div class="pitch">
+                <!-- Field Markings -->
+                <div class="penalty-area left"></div>
+                <div class="penalty-area right"></div>
+                <div class="goal-area left"></div>
+                <div class="goal-area right"></div>
+                <div class="penalty-spot" style="left: 11%;"></div>
+                <div class="penalty-spot" style="right: 11%;"></div>
+                
+                <!-- Home Team -->
+                {% for player in home_roster %}
+                    <button class="player-dot home" 
+                            style="top: {{ player.y }}%; left: {{ player.x }}%;" 
+                            type="button"
+                            {% if not player.player_id or not current_user or user_has_voted %}disabled{% else %}onclick="return openPlayerModal(this, {{ player.player_id }}, '{{ player.name|e }}', '{{ player.position|e }}', {{ player.votes }}, '{{ home_team.name|e if home_team else 'Господарі' }}', 'home');"{% endif %}
+                            title="{{ player.name }}">
+                        {{ player.number }}
+                        <span class="player-name-visible">{{ player.short_name }}</span>
+                        <div class="player-info">
+                            <span class="player-name">{{ player.name }}</span>
+                            <span class="player-position">{{ player.position }}</span>
+                            <span class="player-votes">★ {{ player.votes }}</span>
+                        </div>
+                    </button>
+                {% endfor %}
+
+                <!-- Away Team -->
+                {% for player in away_roster %}
+                    <button class="player-dot away" 
+                            style="top: {{ player.y }}%; left: {{ player.x }}%;" 
+                            type="button"
+                            {% if not player.player_id or not current_user or user_has_voted %}disabled{% else %}onclick="return openPlayerModal(this, {{ player.player_id }}, '{{ player.name|e }}', '{{ player.position|e }}', {{ player.votes }}, '{{ away_team.name|e if away_team else 'Гості' }}', 'away');"{% endif %}
+                            title="{{ player.name }}">
+                        {{ player.number }}
+                        <span class="player-name-visible">{{ player.short_name }}</span>
+                        <div class="player-info">
+                            <span class="player-name">{{ player.name }}</span>
+                            <span class="player-position">{{ player.position }}</span>
+                            <span class="player-votes">★ {{ player.votes }}</span>
+                        </div>
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if selected_match_id and (home_roster or away_roster) %}
+    {% set all_players = home_roster + away_roster %}
+    {% set max_votes = 1 %}
+    {% for p in all_players %}
+        {% if p.votes > max_votes %}
+            {% set max_votes = p.votes %}
+        {% endif %}
+    {% endfor %}
+
+<section class="section stats-section grid-two">
+    <div class="card">
+        <h3>{{ home_team.name if home_team else 'Господарі' }} - Рейтинг</h3>
+        <div class="stats-list">
+            {% for player in home_roster|sort(attribute='votes', reverse=True) %}
+            <div class="stat-row">
+                <div class="stat-info">
+                    <span class="stat-name">{{ player.short_name }}</span>
+                    <span class="stat-votes">{{ player.votes }}</span>
+                </div>
+                <div class="stat-bar-bg">
+                    <div class="stat-bar-fill home" style="width: {{ (player.votes / max_votes) * 100 if max_votes > 0 else 0 }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>{{ away_team.name if away_team else 'Гості' }} - Рейтинг</h3>
+        <div class="stats-list">
+            {% for player in away_roster|sort(attribute='votes', reverse=True) %}
+            <div class="stat-row">
+                <div class="stat-info">
+                    <span class="stat-name">{{ player.short_name }}</span>
+                    <span class="stat-votes">{{ player.votes }}</span>
+                </div>
+                <div class="stat-bar-bg">
+                    <div class="stat-bar-fill away" style="width: {{ (player.votes / max_votes) * 100 if max_votes > 0 else 0 }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endif %}
+
+<!-- Player Modal -->
+<div id="playerModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <div class="player-card">
+            <div class="player-card-header" id="modalPlayerTeam">
+                <span id="modalPlayerNumber" class="player-number-large"></span>
+            </div>
+            <div class="player-card-body">
+                <h2 id="modalPlayerName" class="player-card-name"></h2>
+                <p id="modalPlayerPosition" class="player-card-position"></p>
+                <div class="player-card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Голосів:</span>
+                        <span id="modalPlayerVotes" class="stat-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Команда:</span>
+                        <span id="modalPlayerTeamName" class="stat-value"></span>
+                    </div>
+                </div>
+                {% if current_user and not user_has_voted %}
+                <form method="post" action="{{ url_for('matches.cast_vote') }}" id="voteForm" style="margin-top: 1.5rem;">
+                    <input type="hidden" name="match_id" value="{{ selected_match_id }}">
+                    <input type="hidden" name="player_id" id="modalPlayerId">
+                    <button type="submit" class="btn btn-primary btn-vote" style="width: 100%;">
+                        Проголосувати за цього гравця
+                    </button>
+                </form>
+                {% elif user_has_voted %}
+                <div class="vote-already" style="margin-top: 1.5rem; padding: 1rem; background: #f3f4f6; border-radius: 8px; text-align: center;">
+                    <p style="margin: 0; color: #6b7280;">Ви вже проголосували в цьому матчі</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const userHasVoted = {{ 'true' if user_has_voted else 'false' }};
+const votedPlayerId = {{ voted_player_id if voted_player_id else 'null' }};
+
+function openPlayerModal(button, playerId, playerName, playerPosition, playerVotes, teamName, teamSide) {
+    if (userHasVoted) {
+        alert('Ви вже проголосували в цьому матчі. Кожен користувач може голосувати лише один раз.');
+        return false;
+    }
+    
+    try {
+        const modal = document.getElementById('playerModal');
+        if (!modal) {
+            alert('Помилка: модальне вікно не знайдено. Перезавантажте сторінку.');
+            return false;
+        }
+        
+        const modalPlayerId = document.getElementById('modalPlayerId');
+        const modalPlayerName = document.getElementById('modalPlayerName');
+        const modalPlayerPosition = document.getElementById('modalPlayerPosition');
+        const modalPlayerVotes = document.getElementById('modalPlayerVotes');
+        const modalPlayerTeamName = document.getElementById('modalPlayerTeamName');
+        const modalPlayerNumber = document.getElementById('modalPlayerNumber');
+        
+        if (!modalPlayerId || !modalPlayerName || !modalPlayerPosition || !modalPlayerVotes || !modalPlayerTeamName || !modalPlayerNumber) {
+            return false;
+        }
+        
+        modalPlayerId.value = playerId;
+        modalPlayerName.textContent = playerName;
+        modalPlayerPosition.textContent = playerPosition;
+        modalPlayerVotes.textContent = playerVotes;
+        modalPlayerTeamName.textContent = teamName;
+        
+        let playerNumber = '';
+        if (button) {
+            const firstChild = button.firstChild;
+            if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+                playerNumber = firstChild.textContent.trim();
+            } else {
+                const allText = button.innerText || button.textContent || '';
+                playerNumber = allText.trim().split(/\s+/)[0] || '';
+            }
+        }
+        modalPlayerNumber.textContent = playerNumber;
+        
+        const header = document.getElementById('modalPlayerTeam');
+        if (header) {
+            if (teamSide === 'home') {
+                header.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+            }
+        }
+        
+        modal.style.display = 'block';
+        return false;
+    } catch (error) {
+        console.error('Error opening modal:', error);
+        alert('Помилка при відкритті модального вікна: ' + error.message);
+        return false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('playerModal');
+    const closeBtn = document.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            document.getElementById('playerModal').style.display = 'none';
+        };
+    }
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('playerModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+});
+</script>
+{% endblock %}
+
+

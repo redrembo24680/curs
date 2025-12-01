@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Гравці{% endblock %}
+{% block content %}
+<section class="section grid-two">
+    <div class="card">
+        <h2>Статистика гравців</h2>
+        <p>У системі: <strong>{{ players|length }}</strong> гравців.</p>
+        <p class="muted">Список синхронізується з базою справжніх команд (La Liga, Premier League, Bundesliga).</p>
+    </div>
+    <div class="card">
+        {% if current_user and current_user.role == 'admin' %}
+            <h2>Додати команду</h2>
+            <form method="post" action="{{ url_for('admin.add_team') }}" class="form" style="margin-bottom: 2rem;">
+                <label for="team_name">Назва команди</label>
+                <input type="text" name="name" id="team_name" placeholder="Наприклад: Динамо Київ" required>
+                <button type="submit" class="btn primary small">Створити команду</button>
+            </form>
+
+            <h2>Додати гравця</h2>
+            <form method="post" action="{{ url_for('admin.add_player') }}" class="form">
+                <label for="name">Ім'я</label>
+                <input type="text" name="name" id="name" placeholder="Ім'я гравця" required>
+
+                <label for="team_id">Команда</label>
+                <select name="team_id" id="team_id" required>
+                    <option value="" disabled selected>Оберіть команду</option>
+                    {% for team in teams %}
+                        <option value="{{ team.id }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="position">Позиція</label>
+                <select name="position" id="position" required>
+                    <option value="GK">Воротар (GK)</option>
+                    <option value="LB">Лівий захисник (LB)</option>
+                    <option value="CB">Центральний захисник (CB)</option>
+                    <option value="RB">Правий захисник (RB)</option>
+                    <option value="CDM">Опорний півзахисник (CDM)</option>
+                    <option value="CM">Центральний півзахисник (CM)</option>
+                    <option value="CAM">Атакуючий півзахисник (CAM)</option>
+                    <option value="LM">Лівий півзахисник (LM)</option>
+                    <option value="RM">Правий півзахисник (RM)</option>
+                    <option value="LW">Лівий вінгер (LW)</option>
+                    <option value="RW">Правий вінгер (RW)</option>
+                    <option value="ST">Нападник (ST)</option>
+                </select>
+
+                <button type="submit" class="btn primary">Додати</button>
+            </form>
+        {% else %}
+            <h2>Додавання доступне адміністратору</h2>
+            <p class="muted">Увійдіть під обліковим записом admin/admin123, щоб створювати команди та гравців.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section">
+    <h2>Список гравців</h2>
+    {% if players %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Ім'я</th>
+                <th>Команда</th>
+                <th>Позиція</th>
+                <th>Голосів</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr>
+                <td>{{ player.id }}</td>
+                <td>{{ player.name }}</td>
+                <td>
+                    {% for team in teams %}
+                        {% if team.id == player.team_id %}{{ team.name }}{% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ player.position }}</td>
+                <td>{{ player.votes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="muted">Гравців ще не додано.</p>
+    {% endif %}
+</section>
+
+<section class="section">
+    <h2>Доступні команди</h2>
+    <div class="teams-grid">
+        {% for team in teams %}
+            <div class="team-card">
+                <h3>{{ team.name }}</h3>
+                <p class="muted">ID: {{ team.id }}</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+

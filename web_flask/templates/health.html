@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Стан API{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>Стан підключення до C++ API</h1>
+    <p>Нижче відображено останню відповідь від backend-сервера.</p>
+
+    <div class="card">
+        <pre>{{ api_response }}</pre>
+    </div>
+</section>
+{% endblock %}

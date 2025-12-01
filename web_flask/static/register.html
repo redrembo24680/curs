@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реєстрація · Система голосування</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">⚽ Голосування</div>
+    <ul class="nav-links">
+        <li><a href="/">Головна</a></li>
+        <li><a href="/players">Гравці</a></li>
+        <li><a href="/matches">Матчі</a></li>
+        <li><a href="/stats">Статистика</a></li>
+        <li><a href="/health">Стан API</a></li>
+    </ul>
+    <div class="nav-meta">
+        <div class="stats-bar" id="stats-bar">
+            <span>👥 0 гравців</span>
+            <span>🏟️ 0 матчів</span>
+            <span>🗳️ 0 голосів</span>
+        </div>
+        <div class="auth-bar">
+            <a class="btn ghost" href="/login">Увійти</a>
+            <a class="btn primary small" href="/register">Реєстрація</a>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <div id="flash-container"></div>
+
+    <section class="section" style="max-width: 400px; margin: 2rem auto;">
+        <div class="card">
+            <h2>Реєстрація</h2>
+            <form id="register-form" method="POST" action="/register">
+                <label for="username">Логін</label>
+                <input type="text" name="username" id="username" required autofocus>
+                
+                <label for="password">Пароль</label>
+                <input type="password" name="password" id="password" required minlength="6">
+                
+                <button type="submit" class="btn primary" style="width: 100%;">Зареєструватися</button>
+            </form>
+            <p class="muted" style="margin-top: 1rem; text-align: center;">
+                Вже маєте акаунт? <a href="/login">Увійдіть</a>.
+            </p>
+        </div>
+    </section>
+</main>
+
+<footer>
+    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+</footer>
+
+<script src="/static/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadGlobalStats();
+});
+</script>
+</body>
+</html>
+

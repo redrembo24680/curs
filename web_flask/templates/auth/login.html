@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Вхід{% endblock %}
+{% block content %}
+<section class="section auth-card">
+    <h1>Вхід до системи</h1>
+    <form method="post" class="form vertical">
+        <label for="username">Логін</label>
+        <input type="text" name="username" id="username" placeholder="admin" required>
+
+        <label for="password">Пароль</label>
+        <input type="password" name="password" id="password" placeholder="********" required>
+
+        <button type="submit" class="btn primary">Увійти</button>
+    </form>
+    <p class="muted">Ще не маєте акаунту? <a href="{{ url_for('auth.register') }}">Зареєструйтесь</a>.</p>
+</section>
+{% endblock %}
+
+
+
+
+
+
+
+
+

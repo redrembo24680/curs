@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гравці · Система голосування</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">⚽ Голосування</div>
+    <ul class="nav-links">
+        <li><a href="/">Головна</a></li>
+        <li><a href="/players" class="active">Гравці</a></li>
+        <li><a href="/matches">Матчі</a></li>
+        <li><a href="/stats">Статистика</a></li>
+        <li><a href="/health">Стан API</a></li>
+    </ul>
+    <div class="nav-meta">
+        <div class="stats-bar" id="stats-bar">
+            <span>👥 0 гравців</span>
+            <span>🏟️ 0 матчів</span>
+            <span>🗳️ 0 голосів</span>
+        </div>
+        <div class="auth-bar" id="auth-bar">
+            <a class="btn ghost" href="/login">Увійти</a>
+            <a class="btn primary small" href="/register">Реєстрація</a>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <div id="flash-container"></div>
+
+    <section class="section grid-two">
+        <div class="card">
+            <h2>Статистика гравців</h2>
+            <p>У системі: <strong id="players-count">0</strong> гравців.</p>
+            <p class="muted">Список синхронізується з базою справжніх команд.</p>
+        </div>
+        <div class="card">
+            <h2>Додавання доступне адміністратору</h2>
+            <p class="muted">Увійдіть під обліковим записом admin/admin123, щоб створювати команди та гравців.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Список гравців</h2>
+        <div id="players-table-container">
+            <p class="muted">Завантаження...</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Доступні команди</h2>
+        <div id="teams-grid" class="teams-grid">
+            <p class="muted">Завантаження...</p>
+        </div>
+    </section>
+</main>
+
+<footer>
+    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+</footer>
+
+<script src="/static/app.js"></script>
+<script>
+async function loadPlayers() {
+    const data = await api.get('/players-page', { players: [], teams: [] });
+    const players = data.players || [];
+    const teams = data.teams || [];
+    
+    document.getElementById('players-count').textContent = players.length;
+    
+    // Render players table
+    if (players.length === 0) {
+        document.getElementById('players-table-container').innerHTML = '<p class="muted">Гравців ще не додано.</p>';
+    } else {
+        const teamMap = {};
+        teams.forEach(t => teamMap[t.id] = t.name);
+        
+        const tableHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ім'я</th>
+                        <th>Команда</th>
+                        <th>Позиція</th>
+                        <th>Голосів</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${players.map(p => `
+                        <tr>
+                            <td>${p.id}</td>
+                            <td>${p.name}</td>
+                            <td>${teamMap[p.team_id] || ''}</td>
+                            <td>${p.position}</td>
+                            <td>${p.votes || 0}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        document.getElementById('players-table-container').innerHTML = tableHTML;
+    }
+    
+    // Render teams
+    if (teams.length === 0) {
+        document.getElementById('teams-grid').innerHTML = '<p class="muted">Команд ще не додано.</p>';
+    } else {
+        document.getElementById('teams-grid').innerHTML = teams.map(t => `
+            <div class="team-card">
+                <h3>${t.name}</h3>
+                <p class="muted">ID: ${t.id}</p>
+            </div>
+        `).join('');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayers();
+});
+</script>
+</body>
+</html>
+

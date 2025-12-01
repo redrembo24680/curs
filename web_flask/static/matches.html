@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Матчі · Система голосування</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/modal.css">
+    <link rel="stylesheet" href="/static/stats.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">⚽ Голосування</div>
+    <ul class="nav-links">
+        <li><a href="/">Головна</a></li>
+        <li><a href="/players">Гравці</a></li>
+        <li><a href="/matches" class="active">Матчі</a></li>
+        <li><a href="/stats">Статистика</a></li>
+        <li><a href="/health">Стан API</a></li>
+    </ul>
+    <div class="nav-meta">
+        <div class="stats-bar" id="stats-bar">
+            <span>👥 0 гравців</span>
+            <span>🏟️ 0 матчів</span>
+            <span>🗳️ 0 голосів</span>
+        </div>
+        <div class="auth-bar" id="auth-bar">
+            <a class="btn ghost" href="/login">Увійти</a>
+            <a class="btn primary small" href="/register">Реєстрація</a>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <div id="flash-container"></div>
+
+    <section class="section">
+        <div id="admin-match-form" class="card" style="margin-bottom: 2rem; display: none;">
+            <h2>Створити новий матч (Адмін)</h2>
+            <form id="create-match-form" onsubmit="handleCreateMatch(event)">
+                <label for="create-team1">Команда господарів:</label>
+                <select id="create-team1" name="team1" required style="width: 100%; padding: 0.75rem; font-size: 1rem; margin-bottom: 1rem;">
+                    <option value="">Оберіть команду...</option>
+                </select>
+                
+                <label for="create-team1-formation">Формація господарів:</label>
+                <select id="create-team1-formation" name="team1_formation" required style="width: 100%; padding: 0.75rem; font-size: 1rem; margin-bottom: 1rem;">
+                    <option value="4-3-3">4-3-3</option>
+                    <option value="4-4-2">4-4-2</option>
+                    <option value="4-2-3-1">4-2-3-1</option>
+                    <option value="3-5-2">3-5-2</option>
+                    <option value="4-5-1">4-5-1</option>
+                    <option value="3-4-3">3-4-3</option>
+                    <option value="5-3-2">5-3-2</option>
+                </select>
+                
+                <label for="create-team2">Команда гостей:</label>
+                <select id="create-team2" name="team2" required style="width: 100%; padding: 0.75rem; font-size: 1rem; margin-bottom: 1rem;">
+                    <option value="">Оберіть команду...</option>
+                </select>
+                
+                <label for="create-team2-formation">Формація гостей:</label>
+                <select id="create-team2-formation" name="team2_formation" required style="width: 100%; padding: 0.75rem; font-size: 1rem; margin-bottom: 1rem;">
+                    <option value="4-3-3">4-3-3</option>
+                    <option value="4-4-2">4-4-2</option>
+                    <option value="4-2-3-1">4-2-3-1</option>
+                    <option value="3-5-2">3-5-2</option>
+                    <option value="4-5-1">4-5-1</option>
+                    <option value="3-4-3">3-4-3</option>
+                    <option value="5-3-2">5-3-2</option>
+                </select>
+                
+                <button type="submit" class="btn primary" style="width: 100%;">Створити матч</button>
+            </form>
+        </div>
+        
+        <h2>Оберіть матч для голосування</h2>
+        <div class="card" style="margin-bottom: 2rem;">
+            <select id="match-select" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                <option value="">Завантаження...</option>
+            </select>
+        </div>
+        
+        <div id="formation-controls" style="display: none; margin-bottom: 2rem;">
+            <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label for="home-formation" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        Формація господарів:
+                    </label>
+                    <select id="home-formation" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                        <option value="4-3-3">4-3-3</option>
+                        <option value="4-4-2">4-4-2</option>
+                        <option value="4-2-3-1">4-2-3-1</option>
+                        <option value="3-5-2">3-5-2</option>
+                        <option value="4-5-1">4-5-1</option>
+                        <option value="3-4-3">3-4-3</option>
+                        <option value="5-3-2">5-3-2</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="away-formation" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        Формація гостей:
+                    </label>
+                    <select id="away-formation" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                        <option value="4-3-3">4-3-3</option>
+                        <option value="4-4-2">4-4-2</option>
+                        <option value="4-2-3-1">4-2-3-1</option>
+                        <option value="3-5-2">3-5-2</option>
+                        <option value="4-5-1">4-5-1</option>
+                        <option value="3-4-3">3-4-3</option>
+                        <option value="5-3-2">5-3-2</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pitch-section" style="display: none;">
+        <div class="card scoreboard" id="scoreboard"></div>
+        
+        <div class="card pitch-card">
+            <div class="team-labels">
+                <div class="team-label home" id="home-label"></div>
+                <div class="team-label away" id="away-label"></div>
+            </div>
+            <div class="pitch-container">
+                <div class="pitch" id="pitch">
+                    <!-- Field Markings -->
+                    <div class="penalty-area left"></div>
+                    <div class="penalty-area right"></div>
+                    <div class="goal-area left"></div>
+                    <div class="goal-area right"></div>
+                    <div class="penalty-spot" style="left: 11%;"></div>
+                    <div class="penalty-spot" style="right: 11%;"></div>
+                    <!-- Players will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <section class="section stats-section grid-two">
+            <div class="card">
+                <h3 id="home-team-name">Господарі - Рейтинг</h3>
+                <div class="stats-list" id="home-stats"></div>
+            </div>
+            <div class="card">
+                <h3 id="away-team-name">Гості - Рейтинг</h3>
+                <div class="stats-list" id="away-stats"></div>
+            </div>
+        </section>
+    </section>
+</main>
+
+<footer>
+    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+</footer>
+
+<!-- Player Modal -->
+<div id="playerModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <div class="player-card">
+            <div class="player-card-header">
+                <span id="modalPlayerNumber" class="player-number-large"></span>
+            </div>
+            <div class="player-card-body">
+                <h2 id="modalPlayerName" class="player-card-name"></h2>
+                <p id="modalPlayerPosition" class="player-card-position"></p>
+                <div class="player-card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Голосів:</span>
+                        <span id="modalPlayerVotes" class="stat-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Команда:</span>
+                        <span id="modalPlayerTeamName" class="stat-value"></span>
+                    </div>
+                </div>
+                <div id="vote-section" style="margin-top: 1.5rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/app.js"></script>
+<script src="/static/matches.js"></script>
+</body>
+</html>
+

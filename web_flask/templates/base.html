@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Система голосування{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='modal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='stats.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">⚽ Голосування</div>
+    <ul class="nav-links">
+        <li><a href="{{ url_for('dashboard.dashboard') }}" class="{% if request.endpoint == 'dashboard.dashboard' %}active{% endif %}">Головна</a></li>
+        <li><a href="{{ url_for('players.players') }}" class="{% if request.endpoint == 'players.players' %}active{% endif %}">Гравці</a></li>
+        <li><a href="{{ url_for('matches.matches') }}" class="{% if request.endpoint == 'matches.matches' %}active{% endif %}">Матчі</a></li>
+        <li><a href="{{ url_for('stats.stats') }}" class="{% if request.endpoint == 'stats.stats' %}active{% endif %}">Статистика</a></li>
+        <li><a href="{{ url_for('health.health') }}" class="{% if request.endpoint == 'health.health' %}active{% endif %}">Стан API</a></li>
+    </ul>
+    <div class="nav-meta">
+        <div class="stats-bar">
+            <span>👥 {{ global_stats.total_players }} гравців</span>
+            <span>🏟️ {{ global_stats.total_matches }} матчів</span>
+            <span>🗳️ {{ global_stats.total_votes }} голосів</span>
+        </div>
+        <div class="auth-bar">
+            {% if current_user %}
+                <span class="user-pill">
+                    {{ current_user.username }}
+                    {% if current_user.role == 'admin' %}
+                        <small class="badge badge-success">Admin</small>
+                    {% endif %}
+                </span>
+                <a class="btn ghost" href="{{ url_for('auth.logout') }}">Вийти</a>
+            {% else %}
+                <a class="btn ghost" href="{{ url_for('auth.login') }}">Увійти</a>
+                <a class="btn primary small" href="{{ url_for('auth.register') }}">Реєстрація</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer>
+    Система голосування за гравців &middot; Backend: C++ · Frontend: Flask
+</footer>
+</body>
+</html>
+
+

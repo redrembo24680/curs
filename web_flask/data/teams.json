@@ -1,0 +1,130 @@
+{
+  "teams": [
+    {
+      "slug": "real_madrid",
+      "name": "Real Madrid CF",
+      "country": "Spain",
+      "primary_color": "#ffffff",
+      "secondary_color": "#1f2937",
+      "formation": "4-3-3",
+      "players": [
+        {"number": 1, "name": "Thibaut Courtois", "short_name": "Courtois", "position": "GK", "x": 50, "y": 5},
+        {"number": 2, "name": "Dani Carvajal", "short_name": "Carvajal", "position": "RB", "x": 85, "y": 25},
+        {"number": 3, "name": "Éder Militão", "short_name": "Militão", "position": "CB", "x": 65, "y": 20},
+        {"number": 4, "name": "David Alaba", "short_name": "Alaba", "position": "CB", "x": 35, "y": 20},
+        {"number": 23, "name": "Ferland Mendy", "short_name": "Mendy", "position": "LB", "x": 15, "y": 25},
+        {"number": 18, "name": "Aurélien Tchouaméni", "short_name": "Tchouaméni", "position": "CDM", "x": 50, "y": 35},
+        {"number": 15, "name": "Federico Valverde", "short_name": "Valverde", "position": "CM", "x": 70, "y": 45},
+        {"number": 5, "name": "Jude Bellingham", "short_name": "Bellingham", "position": "CAM", "x": 50, "y": 55},
+        {"number": 11, "name": "Rodrygo Goes", "short_name": "Rodrygo", "position": "RW", "x": 80, "y": 70},
+        {"number": 7, "name": "Vinícius Júnior", "short_name": "Vini Jr", "position": "LW", "x": 20, "y": 70},
+        {"number": 9, "name": "Kylian Mbappé", "short_name": "Mbappé", "position": "ST", "x": 50, "y": 75}
+      ]
+    },
+    {
+      "slug": "fc_barcelona",
+      "name": "FC Barcelona",
+      "country": "Spain",
+      "primary_color": "#a50044",
+      "secondary_color": "#004d98",
+      "formation": "4-3-3",
+      "players": [
+        {"number": 1, "name": "Marc-André ter Stegen", "short_name": "Ter Stegen", "position": "GK", "x": 50, "y": 5},
+        {"number": 23, "name": "Jules Koundé", "short_name": "Koundé", "position": "RB", "x": 85, "y": 25},
+        {"number": 4, "name": "Ronald Araújo", "short_name": "Araújo", "position": "CB", "x": 65, "y": 20},
+        {"number": 33, "name": "Pau Cubarsí", "short_name": "Cubarsí", "position": "CB", "x": 35, "y": 20},
+        {"number": 3, "name": "Alejandro Balde", "short_name": "Balde", "position": "LB", "x": 15, "y": 25},
+        {"number": 15, "name": "Andreas Christensen", "short_name": "Christensen", "position": "CDM", "x": 50, "y": 35},
+        {"number": 8, "name": "Pedri González", "short_name": "Pedri", "position": "CM", "x": 35, "y": 45},
+        {"number": 21, "name": "Frenkie de Jong", "short_name": "F. de Jong", "position": "CM", "x": 65, "y": 45},
+        {"number": 19, "name": "Lamine Yamal", "short_name": "Yamal", "position": "RW", "x": 80, "y": 70},
+        {"number": 11, "name": "Raphinha", "short_name": "Raphinha", "position": "LW", "x": 20, "y": 70},
+        {"number": 9, "name": "Robert Lewandowski", "short_name": "Lewandowski", "position": "ST", "x": 50, "y": 75}
+      ]
+    },
+    {
+      "slug": "manchester_city",
+      "name": "Manchester City",
+      "country": "England",
+      "primary_color": "#6cabdd",
+      "secondary_color": "#1c2c5b",
+      "formation": "4-1-4-1",
+      "players": [
+        {"number": 31, "name": "Ederson Moraes", "short_name": "Ederson", "position": "GK", "x": 50, "y": 5},
+        {"number": 2, "name": "Kyle Walker", "short_name": "Walker", "position": "RB", "x": 85, "y": 25},
+        {"number": 3, "name": "Rúben Dias", "short_name": "Dias", "position": "CB", "x": 65, "y": 20},
+        {"number": 25, "name": "Manuel Akanji", "short_name": "Akanji", "position": "CB", "x": 35, "y": 20},
+        {"number": 24, "name": "Joško Gvardiol", "short_name": "Gvardiol", "position": "LB", "x": 15, "y": 25},
+        {"number": 16, "name": "Rodri Hernández", "short_name": "Rodri", "position": "CDM", "x": 50, "y": 35},
+        {"number": 17, "name": "Kevin De Bruyne", "short_name": "De Bruyne", "position": "CM", "x": 65, "y": 45},
+        {"number": 20, "name": "Bernardo Silva", "short_name": "Bernardo", "position": "CM", "x": 35, "y": 45},
+        {"number": 47, "name": "Phil Foden", "short_name": "Foden", "position": "RW", "x": 80, "y": 65},
+        {"number": 11, "name": "Jérémy Doku", "short_name": "Doku", "position": "LW", "x": 20, "y": 65},
+        {"number": 9, "name": "Erling Haaland", "short_name": "Haaland", "position": "ST", "x": 50, "y": 75}
+      ]
+    },
+    {
+      "slug": "fc_bayern",
+      "name": "FC Bayern München",
+      "country": "Germany",
+      "primary_color": "#c00027",
+      "secondary_color": "#ffffff",
+      "formation": "4-2-3-1",
+      "players": [
+        {"number": 1, "name": "Manuel Neuer", "short_name": "Neuer", "position": "GK", "x": 50, "y": 5},
+        {"number": 6, "name": "Joshua Kimmich", "short_name": "Kimmich", "position": "RB", "x": 85, "y": 25},
+        {"number": 2, "name": "Dayot Upamecano", "short_name": "Upamecano", "position": "CB", "x": 65, "y": 20},
+        {"number": 3, "name": "Kim Min-jae", "short_name": "Min-jae", "position": "CB", "x": 35, "y": 20},
+        {"number": 19, "name": "Alphonso Davies", "short_name": "Davies", "position": "LB", "x": 15, "y": 25},
+        {"number": 27, "name": "Konrad Laimer", "short_name": "Laimer", "position": "CDM", "x": 40, "y": 35},
+        {"number": 8, "name": "Leon Goretzka", "short_name": "Goretzka", "position": "CDM", "x": 60, "y": 35},
+        {"number": 10, "name": "Leroy Sané", "short_name": "Sané", "position": "RW", "x": 80, "y": 60},
+        {"number": 42, "name": "Jamal Musiala", "short_name": "Musiala", "position": "CAM", "x": 50, "y": 55},
+        {"number": 11, "name": "Kingsley Coman", "short_name": "Coman", "position": "LW", "x": 20, "y": 60},
+        {"number": 9, "name": "Harry Kane", "short_name": "Kane", "position": "ST", "x": 50, "y": 75}
+      ]
+    },
+    {
+      "slug": "arsenal",
+      "name": "Arsenal FC",
+      "country": "England",
+      "primary_color": "#EF0107",
+      "secondary_color": "#FFFFFF",
+      "formation": "4-3-3",
+      "players": [
+        {"number": 22, "name": "David Raya", "short_name": "Raya", "position": "GK", "x": 50, "y": 5},
+        {"number": 4, "name": "Ben White", "short_name": "White", "position": "RB", "x": 85, "y": 25},
+        {"number": 2, "name": "William Saliba", "short_name": "Saliba", "position": "CB", "x": 65, "y": 20},
+        {"number": 6, "name": "Gabriel Magalhães", "short_name": "Gabriel", "position": "CB", "x": 35, "y": 20},
+        {"number": 35, "name": "Oleksandr Zinchenko", "short_name": "Zinchenko", "position": "LB", "x": 15, "y": 25},
+        {"number": 41, "name": "Declan Rice", "short_name": "Rice", "position": "CDM", "x": 50, "y": 35},
+        {"number": 8, "name": "Martin Ødegaard", "short_name": "Ødegaard", "position": "CM", "x": 70, "y": 45},
+        {"number": 29, "name": "Kai Havertz", "short_name": "Havertz", "position": "CM", "x": 30, "y": 45},
+        {"number": 7, "name": "Bukayo Saka", "short_name": "Saka", "position": "RW", "x": 80, "y": 70},
+        {"number": 11, "name": "Gabriel Martinelli", "short_name": "Martinelli", "position": "LW", "x": 20, "y": 70},
+        {"number": 9, "name": "Gabriel Jesus", "short_name": "Jesus", "position": "ST", "x": 50, "y": 75}
+      ]
+    },
+    {
+      "slug": "liverpool",
+      "name": "Liverpool FC",
+      "country": "England",
+      "primary_color": "#C8102E",
+      "secondary_color": "#00B2A9",
+      "formation": "4-3-3",
+      "players": [
+        {"number": 1, "name": "Alisson Becker", "short_name": "Alisson", "position": "GK", "x": 50, "y": 5},
+        {"number": 66, "name": "Trent Alexander-Arnold", "short_name": "Trent", "position": "RB", "x": 85, "y": 25},
+        {"number": 4, "name": "Virgil van Dijk", "short_name": "Van Dijk", "position": "CB", "x": 65, "y": 20},
+        {"number": 5, "name": "Ibrahima Konaté", "short_name": "Konaté", "position": "CB", "x": 35, "y": 20},
+        {"number": 26, "name": "Andy Robertson", "short_name": "Robertson", "position": "LB", "x": 15, "y": 25},
+        {"number": 3, "name": "Wataru Endo", "short_name": "Endo", "position": "CDM", "x": 50, "y": 35},
+        {"number": 8, "name": "Dominik Szoboszlai", "short_name": "Szoboszlai", "position": "CM", "x": 70, "y": 45},
+        {"number": 10, "name": "Alexis Mac Allister", "short_name": "Mac Allister", "position": "CM", "x": 30, "y": 45},
+        {"number": 11, "name": "Mohamed Salah", "short_name": "Salah", "position": "RW", "x": 80, "y": 70},
+        {"number": 7, "name": "Luis Díaz", "short_name": "Díaz", "position": "LW", "x": 20, "y": 70},
+        {"number": 9, "name": "Darwin Núñez", "short_name": "Núñez", "position": "ST", "x": 50, "y": 75}
+      ]
+    }
+  ]
+}

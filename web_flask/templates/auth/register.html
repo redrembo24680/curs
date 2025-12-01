@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Реєстрація{% endblock %}
+{% block content %}
+<section class="section auth-card">
+    <h1>Створення облікового запису</h1>
+    <form method="post" class="form vertical">
+        <label for="username">Логін</label>
+        <input type="text" name="username" id="username" placeholder="fan123" required>
+
+        <label for="password">Пароль</label>
+        <input type="password" name="password" id="password" placeholder="мінімум 6 символів" required minlength="6">
+
+        <button type="submit" class="btn primary">Зареєструватись</button>
+    </form>
+    <p class="muted">Вже маєте акаунт? <a href="{{ url_for('auth.login') }}">Увійдіть</a>.</p>
+</section>
+{% endblock %}
+
+
+
+
+
+
+
+
+

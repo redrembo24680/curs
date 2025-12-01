@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Головна · Голосування{% endblock %}
+{% block content %}
+<section class="section intro">
+    <div>
+        <h1>Система Live-голосування за гравців матчу</h1>
+        <p class="muted">Інтерактивна платформа для голосування за найкращих гравців футбольних матчів у реальному часі.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="card">
+        <h2>Про проект</h2>
+        <div style="line-height: 1.8;">
+            <p>
+                <strong>Система Live-голосування</strong> — це веб-додаток, який дозволяє уболівальникам 
+                голосувати за найкращих гравців під час футбольних матчів у реальному часі.
+            </p>
+            
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Основні можливості:</h3>
+            <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li><strong>Інтерактивне поле:</strong> Візуалізація розташування гравців на полі з можливістю голосування</li>
+                <li><strong>Реальний час:</strong> Оновлення результатів голосування миттєво</li>
+                <li><strong>Статистика:</strong> Детальна статистика по кожному гравцю та матчу</li>
+                <li><strong>Безпека:</strong> Кожен користувач може проголосувати лише один раз за матч</li>
+                <li><strong>Адміністрування:</strong> Можливість створювати матчі, додавати команди та гравців</li>
+            </ul>
+            
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Як це працює:</h3>
+            <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Перейдіть на сторінку <a href="{{ url_for('matches.matches') }}">"Матчі"</a></li>
+                <li>Оберіть активний матч</li>
+                <li>Натисніть на гравця на полі, щоб віддати йому свій голос</li>
+                <li>Переглядайте статистику голосування в реальному часі</li>
+            </ol>
+            
+            <div style="margin-top: 2rem; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+                <p style="margin: 0;">
+                    <strong>💡 Порада:</strong> Для голосування потрібно 
+                    <a href="{{ url_for('auth.login') }}">увійти в систему</a>. 
+                    Якщо у вас немає облікового запису, ви можете 
+                    <a href="{{ url_for('auth.register') }}">зареєструватися</a> безкоштовно.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <div class="card">
+        <h2>Активні матчі</h2>
+        {% if matches %}
+            <div class="matches-list" style="margin-top: 1rem;">
+                {% for match in matches %}
+                    <div class="match-item" style="padding: 0.75rem; margin-bottom: 0.5rem; background: {% if match.isActive %}#f0fdf4{% else %}#f9fafb{% endif %}; border-radius: 6px; border-left: 3px solid {% if match.isActive %}#10b981{% else %}#6b7280{% endif %};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>{{ match.team1 }} vs {{ match.team2 }}</strong>
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #6b7280;">{{ match.date }}</p>
+                            </div>
+                            <span class="badge {% if match.isActive %}badge-success{% else %}badge-muted{% endif %}" style="font-size: 0.75rem;">
+                                {% if match.isActive %}Активний{% else %}Завершено{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <p style="margin-top: 1rem; text-align: center;">
+                <a href="{{ url_for('matches.matches') }}" class="btn primary" style="display: inline-block;">Перейти до голосування</a>
+            </p>
+        {% else %}
+            <p class="muted">Немає активних матчів. Створіть новий матч у вкладці "Матчі".</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Статистика системи</h2>
+        <div style="margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb;">
+                <span>Всього матчів:</span>
+                <strong>{{ global_stats.total_matches }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb;">
+                <span>Всього гравців:</span>
+                <strong>{{ global_stats.total_players }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                <span>Всього голосів:</span>
+                <strong>{{ global_stats.total_votes }}</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

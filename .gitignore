@@ -1,0 +1,36 @@
+# Build directories
+server_cpp/build/
+server_cpp/bin/
+server_cpp/data/*.json
+server_cpp/data/*.db
+server_cpp/data/*.db-shm
+server_cpp/data/*.db-wal
+backend/
+web_flask/flask_session/
+web_flask/database.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+
