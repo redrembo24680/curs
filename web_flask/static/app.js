@@ -78,9 +78,74 @@ async function loadGlobalStats() {
     }
 }
 
+// Load user info
+async function loadUserInfo() {
+    const authBar = document.getElementById('auth-bar');
+    const loginTip = document.getElementById('login-tip');
+    
+    try {
+        const response = await fetch('/api/user-info', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const userInfo = await response.json();
+        
+        if (userInfo.logged_in) {
+            // User is logged in - update auth bar
+            if (authBar) {
+                authBar.innerHTML = `
+                    <span class="user-pill" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 20px; font-size: 0.9rem;">
+                        ${userInfo.username || 'Користувач'}
+                        ${userInfo.role === 'admin' ? '<small style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #10b981; color: white; border-radius: 10px; font-size: 0.75rem;">Admin</small>' : ''}
+                    </span>
+                    <a class="btn ghost" href="/logout">Вийти</a>
+                `;
+            }
+            // Hide login tip if user is logged in
+            if (loginTip) {
+                loginTip.style.display = 'none';
+            }
+        } else {
+            // User is not logged in
+            if (authBar) {
+                authBar.innerHTML = `
+                    <a class="btn ghost" href="/login">Увійти</a>
+                    <a class="btn primary small" href="/register">Реєстрація</a>
+                `;
+            }
+            // Show login tip if user is not logged in
+            if (loginTip) {
+                loginTip.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user info:', error);
+        if (authBar) {
+            authBar.innerHTML = `
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
+            `;
+        }
+        // Show login tip on error
+        if (loginTip) {
+            loginTip.style.display = 'block';
+        }
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadGlobalStats();
+    loadUserInfo();
     
     // Set active nav link
     const currentPath = window.location.pathname;
@@ -91,4 +156,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-

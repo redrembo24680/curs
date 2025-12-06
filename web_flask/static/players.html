@@ -17,6 +17,8 @@
         <li><a href="/players" class="active">Гравці</a></li>
         <li><a href="/matches">Матчі</a></li>
         <li><a href="/stats">Статистика</a></li>
+        <li><a href="/posts">Новини</a></li>
+        <li><a href="/profile">Профіль</a></li>
         <li><a href="/health">Стан API</a></li>
     </ul>
     <div class="nav-meta">
@@ -41,9 +43,10 @@
             <p>У системі: <strong id="players-count">0</strong> гравців.</p>
             <p class="muted">Список синхронізується з базою справжніх команд.</p>
         </div>
-        <div class="card">
-            <h2>Додавання доступне адміністратору</h2>
-            <p class="muted">Увійдіть під обліковим записом admin/admin123, щоб створювати команди та гравців.</p>
+        <div class="card" id="admin-forms-card">
+            <div id="admin-forms-content">
+                <p class="muted">Увійдіть як адміністратор, щоб створювати команди та гравців.</p>
+            </div>
         </div>
     </section>
 
@@ -74,6 +77,13 @@ async function loadPlayers() {
     const teams = data.teams || [];
     
     document.getElementById('players-count').textContent = players.length;
+    
+    // Populate team select for adding players
+    const teamSelect = document.getElementById('player_team_id');
+    if (teamSelect) {
+        teamSelect.innerHTML = '<option value="" disabled selected>Оберіть команду</option>' +
+            teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    }
     
     // Render players table
     if (players.length === 0) {
@@ -122,7 +132,189 @@ async function loadPlayers() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Check user login status
+async function checkUserLoginStatus() {
+    try {
+        const response = await fetch('/api/user-info', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const userInfo = await response.json();
+        window.userLoggedIn = userInfo.logged_in || false;
+        window.currentUser = userInfo.logged_in ? userInfo : null;
+        
+        // Show admin forms only if user is admin
+        const adminCard = document.getElementById('admin-forms-card');
+        if (adminCard) {
+            if (window.currentUser && window.currentUser.role === 'admin') {
+                adminCard.innerHTML = `
+                    <h2>Додати команду</h2>
+                    <form id="add-team-form" class="form" style="margin-bottom: 1.5rem;">
+                        <label for="team_name">Назва команди</label>
+                        <input type="text" name="name" id="team_name" placeholder="Наприклад: Динамо Київ" required>
+                        <button type="submit" class="btn primary small">Створити команду</button>
+                    </form>
+
+                    <h2>Додати гравця</h2>
+                    <form id="add-player-form" class="form">
+                        <label for="player_name">Ім'я гравця</label>
+                        <input type="text" name="name" id="player_name" placeholder="Ім'я гравця" required>
+
+                        <label for="player_team_id">Команда</label>
+                        <select name="team_id" id="player_team_id" required>
+                            <option value="" disabled selected>Оберіть команду</option>
+                        </select>
+
+                        <label for="player_position">Позиція</label>
+                        <select name="position" id="player_position" required>
+                            <option value="GK">Воротар (GK)</option>
+                            <option value="LB">Лівий захисник (LB)</option>
+                            <option value="CB">Центральний захисник (CB)</option>
+                            <option value="RB">Правий захисник (RB)</option>
+                            <option value="CDM">Опорний півзахисник (CDM)</option>
+                            <option value="CM">Центральний півзахисник (CM)</option>
+                            <option value="CAM">Атакуючий півзахисник (CAM)</option>
+                            <option value="LM">Лівий півзахисник (LM)</option>
+                            <option value="RM">Правий півзахисник (RM)</option>
+                            <option value="LW">Лівий вінгер (LW)</option>
+                            <option value="RW">Правий вінгер (RW)</option>
+                            <option value="ST">Нападник (ST)</option>
+                        </select>
+
+                        <button type="submit" class="btn primary">Додати гравця</button>
+                    </form>
+                `;
+                
+                // Re-attach form handlers
+                const addTeamForm = document.getElementById('add-team-form');
+                if (addTeamForm) {
+                    addTeamForm.addEventListener('submit', handleAddTeam);
+                }
+                const addPlayerForm = document.getElementById('add-player-form');
+                if (addPlayerForm) {
+                    addPlayerForm.addEventListener('submit', handleAddPlayer);
+                }
+            } else {
+                adminCard.innerHTML = '<p class="muted">Увійдіть як адміністратор, щоб створювати команди та гравців.</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking login status:', error);
+        window.userLoggedIn = false;
+        window.currentUser = null;
+    }
+}
+
+// Update auth bar
+async function updateAuthBar() {
+    const authBar = document.getElementById('auth-bar');
+    if (!authBar) return;
+    
+    try {
+        const response = await fetch('/api/user-info', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const userInfo = await response.json();
+        
+        if (userInfo.logged_in) {
+            authBar.innerHTML = `
+                <span class="user-pill" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 20px; font-size: 0.9rem;">
+                    ${userInfo.username || 'Користувач'}
+                    ${userInfo.role === 'admin' ? '<small style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #10b981; color: white; border-radius: 10px; font-size: 0.75rem;">Admin</small>' : ''}
+                </span>
+                <a class="btn ghost" href="/logout">Вийти</a>
+            `;
+        } else {
+            authBar.innerHTML = `
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading user info:', error);
+        authBar.innerHTML = `
+            <a class="btn ghost" href="/login">Увійти</a>
+            <a class="btn primary small" href="/register">Реєстрація</a>
+        `;
+    }
+}
+
+// Handle add team form
+async function handleAddTeam(event) {
+    event.preventDefault();
+    
+    // Check if user is admin
+    if (!window.currentUser || window.currentUser.role !== 'admin') {
+        showFlash('Тільки адміністратори можуть створювати команди', 'danger');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const teamData = {
+        name: formData.get('name')
+    };
+
+    const result = await api.post('/teams/add', teamData);
+    if (result.ok) {
+        showFlash('Команду успішно створено!', 'success');
+        event.target.reset();
+        loadPlayers(); // Reload to show new team
+    } else {
+        showFlash(result.result.message || 'Помилка створення команди', 'danger');
+    }
+}
+
+// Handle add player form
+async function handleAddPlayer(event) {
+    event.preventDefault();
+    
+    // Check if user is admin
+    if (!window.currentUser || window.currentUser.role !== 'admin') {
+        showFlash('Тільки адміністратори можуть додавати гравців', 'danger');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const playerData = {
+        name: formData.get('name'),
+        position: formData.get('position'),
+        team_id: formData.get('team_id')
+    };
+
+    const result = await api.post('/players/add', playerData);
+    if (result.ok) {
+        showFlash('Гравця успішно додано!', 'success');
+        event.target.reset();
+        loadPlayers(); // Reload to show new player
+    } else {
+        showFlash(result.result.message || 'Помилка додавання гравця', 'danger');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check user login status first
+    await checkUserLoginStatus();
+    updateAuthBar();
+    
     loadPlayers();
 });
 </script>

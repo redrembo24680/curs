@@ -1,7 +1,10 @@
 // Matches page functionality
 let currentMatchId = null;
-let userHasVoted = false;
-let votedPlayerId = null;
+let userVotedPlayerIds = []; // Global list of players user voted for
+
+// User login status (will be set by checkUserLoginStatus)
+window.userLoggedIn = false;
+window.currentUser = null;
 
 // Football formation schemes
 // Format: { positions: [{x, y, position}], name: "4-3-3" }
@@ -125,6 +128,17 @@ async function loadMatches() {
     const data = await api.get('/matches-page', { matches: [], teams: [] });
     const matches = data.matches || [];
     const teams = data.teams || [];
+    const playersData = await api.get('/players', { players: [] });
+    const players = playersData.players || [];
+
+    // Show all matches - don't filter aggressively
+    // We'll just handle empty rosters when loading match data
+    const validMatches = matches;
+    
+    // Check user login status and update UI
+    await checkUserLoginStatus();
+    updateAuthBar();
+
     const select = document.getElementById('match-select');
 
     // Load teams for admin form
@@ -136,20 +150,23 @@ async function loadMatches() {
         team2Select.innerHTML = '<option value="">Оберіть команду...</option>' + teamOptions;
     }
 
-    // Check if user is admin (simple check - in production use proper auth)
+    // Check if user is admin and show admin form
     const adminForm = document.getElementById('admin-match-form');
     if (adminForm) {
-        // Show admin form (you can add proper admin check here)
-        adminForm.style.display = 'block';
+        if (window.currentUser && window.currentUser.role === 'admin') {
+            adminForm.style.display = 'block';
+        } else {
+            adminForm.style.display = 'none';
+        }
     }
 
-    if (matches.length === 0) {
+    if (validMatches.length === 0) {
         select.innerHTML = '<option value="">Немає матчів</option>';
         return;
     }
 
     select.innerHTML = '<option value="">Оберіть матч...</option>' +
-        matches.map(m => `<option value="${m.id}">${m.team1} vs ${m.team2} - ${m.isActive ? 'Активний' : 'Завершено'}</option>`).join('');
+        validMatches.map(m => `<option value="${m.id}">${m.team1} vs ${m.team2} - ${m.isActive ? 'Активний' : 'Завершено'}</option>`).join('');
 
     select.addEventListener('change', (e) => {
         if (e.target.value) {
@@ -160,15 +177,22 @@ async function loadMatches() {
     });
 
     // Auto-select first match
-    if (matches.length > 0 && matches[0].isActive) {
-        select.value = matches[0].id;
-        loadMatchData(matches[0].id);
+    if (validMatches.length > 0 && validMatches[0].isActive) {
+        select.value = validMatches[0].id;
+        loadMatchData(validMatches[0].id);
     }
 }
 
 // Handle match creation
 async function handleCreateMatch(event) {
     event.preventDefault();
+    
+    // Check if user is admin
+    if (!window.currentUser || window.currentUser.role !== 'admin') {
+        showFlash('Тільки адміністратори можуть створювати матчі', 'danger');
+        return;
+    }
+    
     const formData = new FormData(event.target);
     const matchData = {
         team1: formData.get('team1'),
@@ -187,9 +211,170 @@ async function handleCreateMatch(event) {
     }
 }
 
+// Authentication removed - no login checks needed
+
+// Check user login status
+async function checkUserLoginStatus() {
+    try {
+        const response = await fetch('/api/user-info', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const userInfo = await response.json();
+        window.userLoggedIn = userInfo.logged_in || false;
+        window.currentUser = userInfo.logged_in ? userInfo : null;
+        
+        // If user is logged in, load their global vote history (all players they voted for)
+        if (window.userLoggedIn) {
+            try {
+                const votesResponse = await fetch('/api/user-player-votes', {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (votesResponse.ok) {
+                    const votesData = await votesResponse.json();
+                    userVotedPlayerIds = votesData.player_ids || [];
+                }
+            } catch (e) {
+                console.warn('Could not load user vote history:', e);
+            }
+        } else {
+            userVotedPlayerIds = [];
+        }
+    } catch (error) {
+        console.error('Error checking login status:', error);
+        window.userLoggedIn = false;
+        window.currentUser = null;
+        userVotedPlayerIds = [];
+    }
+}
+
+// Check if user has voted for current match
+async function checkUserVoteStatus(matchId) {
+    if (!window.userLoggedIn) {
+        userHasVoted = false;
+        votedPlayerId = null;
+        userVotedPlayerIds = [];
+        return;
+    }
+    
+    let lastError = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            const response = await fetch(`/api/vote-status/${matchId}`, {
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                if (attempt === 0) {
+                    await new Promise(r => setTimeout(r, 300)); // Wait before retry
+                    continue;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const status = await response.json();
+            userHasVoted = status.has_voted || false;
+        
+            // Update list of players user voted for
+            if (status.player_ids && Array.isArray(status.player_ids)) {
+                userVotedPlayerIds = status.player_ids;
+            } else {
+                userVotedPlayerIds = [];
+            }
+            
+            if (status.has_voted && status.player_id) {
+                votedPlayerId = status.player_id;
+            } else {
+                votedPlayerId = null;
+            }
+            return; // Success - exit retry loop
+        } catch (error) {
+            lastError = error;
+            if (attempt === 0) {
+                await new Promise(r => setTimeout(r, 300)); // Wait before retry
+                continue;
+            }
+        }
+    }
+    
+    // If all retries failed
+    console.warn('Could not load vote status:', lastError);
+    userHasVoted = false;
+    votedPlayerId = null;
+}
+
+// Update auth bar with user info
+async function updateAuthBar() {
+    const authBar = document.getElementById('auth-bar');
+    if (!authBar) return;
+    
+    try {
+        const response = await fetch('/api/user-info', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const userInfo = await response.json();
+        
+        if (userInfo.logged_in) {
+            authBar.innerHTML = `
+                <span class="user-pill" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 20px; font-size: 0.9rem;">
+                    ${userInfo.username || 'Користувач'}
+                    ${userInfo.role === 'admin' ? '<small style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #10b981; color: white; border-radius: 10px; font-size: 0.75rem;">Admin</small>' : ''}
+                </span>
+                <a class="btn ghost" href="/logout">Вийти</a>
+            `;
+        } else {
+            authBar.innerHTML = `
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading user info:', error);
+        authBar.innerHTML = `
+            <a class="btn ghost" href="/login">Увійти</a>
+            <a class="btn primary small" href="/register">Реєстрація</a>
+        `;
+    }
+}
+
 // Load match data
 async function loadMatchData(matchId) {
     currentMatchId = matchId;
+
+    // Check user login and vote status FIRST
+    await checkUserLoginStatus();
+    await checkUserVoteStatus(matchId);
+    
+    // Reset vote status if match changed
+    if (currentMatchId !== matchId) {
+        userHasVoted = false;
+        votedPlayerId = null;
+    }
 
     // Get match data
     const pageData = await api.get('/matches-page', { matches: [], teams: [] });
@@ -211,24 +396,45 @@ async function loadMatchData(matchId) {
     const homeTeam = pageData.teams.find(t => t.name === match.team1);
     const awayTeam = pageData.teams.find(t => t.name === match.team2);
 
-    const homePlayers = allPlayers.filter(p => p.team_id === homeTeam?.id);
-    const awayPlayers = allPlayers.filter(p => p.team_id === awayTeam?.id);
+    const homePlayers = homeTeam ? allPlayers.filter(p => p.team_id === homeTeam.id) : [];
+    const awayPlayers = awayTeam ? allPlayers.filter(p => p.team_id === awayTeam.id) : [];
 
-    // Get formations for teams (from match data or UI, default to 4-3-3)
+    // Get formations for teams (ONLY from match data, static - cannot be changed)
+    const homeFormation = match.team1_formation || match.home_formation || defaultFormation;
+    const awayFormation = match.team2_formation || match.away_formation || defaultFormation;
+
+    // Update formation display (read-only, show as text)
     const homeFormationSelect = document.getElementById('home-formation');
     const awayFormationSelect = document.getElementById('away-formation');
-    const homeFormation = match.team1_formation || match.home_formation || homeFormationSelect?.value || defaultFormation;
-    const awayFormation = match.team2_formation || match.away_formation || awayFormationSelect?.value || defaultFormation;
+    if (homeFormationSelect) {
+        homeFormationSelect.value = homeFormation;
+        homeFormationSelect.disabled = true; // Make it read-only
+        homeFormationSelect.style.backgroundColor = '#f3f4f6';
+        homeFormationSelect.style.cursor = 'not-allowed';
+    }
+    if (awayFormationSelect) {
+        awayFormationSelect.value = awayFormation;
+        awayFormationSelect.disabled = true; // Make it read-only
+        awayFormationSelect.style.backgroundColor = '#f3f4f6';
+        awayFormationSelect.style.cursor = 'not-allowed';
+    }
 
-    // Set formation selectors
-    if (homeFormationSelect) homeFormationSelect.value = homeFormation;
-    if (awayFormationSelect) awayFormationSelect.value = awayFormation;
-
-    // Show formation controls
+    // Show formation controls (but they are disabled)
     const formationControls = document.getElementById('formation-controls');
-    if (formationControls) formationControls.style.display = 'block';
+    if (formationControls) {
+        formationControls.style.display = 'block';
+        // Add note that formations are fixed
+        const note = formationControls.querySelector('.formation-note');
+        if (!note) {
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'formation-note';
+            noteDiv.style.cssText = 'grid-column: 1 / -1; padding: 0.5rem; background: #fef3c7; border-radius: 6px; font-size: 0.875rem; color: #92400e; text-align: center; margin-top: 0.5rem;';
+            noteDiv.textContent = 'ℹ️ Схеми команд встановлені при створенні матчу і не можуть бути змінені';
+            formationControls.querySelector('.card').appendChild(noteDiv);
+        }
+    }
 
-    // Build rosters with formations
+    // Build rosters with formations (static, from match data)
     const homeRoster = buildRosterByFormation(homePlayers, votesMap, 'home', homeFormation);
     const awayRoster = buildRosterByFormation(awayPlayers, votesMap, 'away', awayFormation);
 
@@ -238,33 +444,20 @@ async function loadMatchData(matchId) {
     renderStats(homeRoster, awayRoster, match);
 
     document.getElementById('pitch-section').style.display = 'block';
-
-    // Add event listeners for formation changes
-    if (homeFormationSelect) {
-        // Remove old listener if exists
-        const newHomeSelect = homeFormationSelect.cloneNode(true);
-        homeFormationSelect.parentNode.replaceChild(newHomeSelect, homeFormationSelect);
-        newHomeSelect.onchange = () => {
-            const newFormation = newHomeSelect.value;
-            const newRoster = buildRosterByFormation(homePlayers, votesMap, 'home', newFormation);
-            renderPitch(newRoster, awayRoster, match);
-            renderStats(newRoster, awayRoster, match);
-            updateScoreboard(match, newRoster, awayRoster);
-        };
+    
+    // Load comments for this match
+    loadComments(matchId);
+    
+    // Setup comment form
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+        // Remove old listeners
+        const newForm = commentForm.cloneNode(true);
+        commentForm.parentNode.replaceChild(newForm, commentForm);
+        newForm.onsubmit = (e) => addComment(e, matchId);
     }
 
-    if (awayFormationSelect) {
-        // Remove old listener if exists
-        const newAwaySelect = awayFormationSelect.cloneNode(true);
-        awayFormationSelect.parentNode.replaceChild(newAwaySelect, awayFormationSelect);
-        newAwaySelect.onchange = () => {
-            const newFormation = newAwaySelect.value;
-            const newRoster = buildRosterByFormation(awayPlayers, votesMap, 'away', newFormation);
-            renderPitch(homeRoster, newRoster, match);
-            renderStats(homeRoster, newRoster, match);
-            updateScoreboard(match, homeRoster, newRoster);
-        };
-    }
+    // NO event listeners for formation changes - formations are static!
 }
 
 // Build roster using formation scheme
@@ -554,10 +747,30 @@ function createPlayerButton(player, side, teamName) {
         </div>
     `;
 
-    if (!userHasVoted) {
+    // Only allow clicking if user is logged in and hasn't voted
+    if (window.userLoggedIn && !userHasVoted) {
         btn.onclick = () => openPlayerModal(player, teamName, side);
+        btn.style.cursor = 'pointer';
+        btn.title = `${player.name} (${player.position}) - ${player.votes} голосів`;
+    } else if (!window.userLoggedIn) {
+        btn.onclick = () => {
+            showFlash('Для голосування потрібно увійти до системи', 'warning');
+            setTimeout(() => window.location.href = '/login', 1500);
+        };
+        btn.style.cursor = 'pointer';
+        btn.title = 'Увійдіть для голосування';
     } else {
+        // User has already voted
         btn.disabled = true;
+        btn.style.cursor = 'not-allowed';
+        btn.style.opacity = '0.6';
+        if (votedPlayerId === player.id) {
+            btn.title = 'Ви проголосували за цього гравця';
+            btn.style.border = '2px solid #10b981';
+            btn.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.5)';
+        } else {
+            btn.title = 'Ви вже проголосували в цьому матчі';
+        }
     }
 
     return btn;
@@ -565,8 +778,16 @@ function createPlayerButton(player, side, teamName) {
 
 // Open player modal
 function openPlayerModal(player, teamName, side) {
-    if (userHasVoted) {
-        alert('Ви вже проголосували в цьому матчі.');
+    // Check if user is logged in
+    if (!window.userLoggedIn) {
+        alert('Для голосування потрібно увійти до системи. Перейдіть на сторінку входу.');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Check if user already voted for THIS SPECIFIC PLAYER
+    if (userVotedPlayerIds && userVotedPlayerIds.includes(player.id)) {
+        showFlash('Ви вже проголосували за цього гравця', 'warning');
         return;
     }
 
@@ -578,7 +799,7 @@ function openPlayerModal(player, teamName, side) {
 
     document.getElementById('vote-section').innerHTML = `
         <form id="voteForm" onsubmit="submitVote(event, ${player.id})">
-            <button type="submit" class="btn btn-primary btn-vote" style="width: 100%;">
+            <button type="submit" id="voteButton" class="btn btn-primary btn-vote" style="width: 100%;">
                 Проголосувати за цього гравця
             </button>
         </form>
@@ -591,19 +812,87 @@ function openPlayerModal(player, teamName, side) {
 async function submitVote(event, playerId) {
     event.preventDefault();
     if (!currentMatchId) return;
+    
+    // Check if user is logged in
+    if (!window.userLoggedIn) {
+        showFlash('Для голосування потрібно увійти до системи', 'danger');
+        window.location.href = '/login';
+        return;
+    }
 
-    const result = await api.post('/vote', {
-        player_id: playerId,
-        match_id: currentMatchId
-    });
+    // Get and disable vote button
+    const voteButton = document.getElementById('voteButton');
+    if (voteButton) {
+        voteButton.disabled = true;
+        voteButton.textContent = 'Завантаження...';
+    }
 
-    if (result.ok) {
-        showFlash('Голос зараховано!', 'success');
-        document.getElementById('playerModal').style.display = 'none';
-        userHasVoted = true;
-        loadMatchData(currentMatchId); // Reload
-    } else {
-        showFlash(result.result.message || 'Помилка голосування', 'danger');
+    // Use Flask endpoint which checks authentication
+    try {
+        const response = await fetch('/api/vote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin', // Include cookies for session
+            body: JSON.stringify({
+                player_id: playerId,
+                match_id: currentMatchId
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.status === 'success') {
+            showFlash('✓ Голос успішно зараховано!', 'success');
+            document.getElementById('playerModal').style.display = 'none';
+            
+            // Add player to voted list
+            if (!userVotedPlayerIds.includes(playerId)) {
+                userVotedPlayerIds.push(playerId);
+            }
+            
+            userHasVoted = true;
+            votedPlayerId = playerId;
+            
+            // Invalidate cache for votes to force refresh next time
+            // But don't reload entire match - just update the votes display
+            setTimeout(() => {
+                // Small delay to ensure backend processed the vote
+                loadMatchData(currentMatchId).catch(e => console.error('Error reloading match:', e));
+            }, 500);
+        } else {
+            const errorMsg = result.message || 'Помилка голосування';
+            showFlash(errorMsg, 'danger');
+            
+            // Re-enable button on error
+            if (voteButton) {
+                voteButton.disabled = false;
+                voteButton.textContent = 'Проголосувати за цього гравця';
+            }
+            
+            // If user already voted, update status
+            if (errorMsg.includes('вже проголосували') || result.has_voted) {
+                userHasVoted = true;
+                if (result.player_id) {
+                    votedPlayerId = result.player_id;
+                }
+                // Don't reload - user already voted message is enough
+            }
+            
+            if (errorMsg.includes('увійти') || response.status === 401) {
+                setTimeout(() => window.location.href = '/login', 2000);
+            }
+        }
+    } catch (error) {
+        showFlash('Помилка підключення до сервера', 'danger');
+        console.error('Vote error:', error);
+        
+        // Re-enable button on error
+        if (voteButton) {
+            voteButton.disabled = false;
+            voteButton.textContent = 'Проголосувати за цього гравця';
+        }
     }
 }
 
@@ -657,8 +946,135 @@ document.querySelector('.modal-close')?.addEventListener('click', () => {
     document.getElementById('playerModal').style.display = 'none';
 });
 
+// Load comments for match
+async function loadComments(matchId) {
+    if (!matchId) return;
+    
+    try {
+        const response = await fetch(`/api/matches/${matchId}/comments`);
+        const data = await response.json();
+        const comments = data.comments || [];
+        const commentsDiv = document.getElementById('comments-container');
+        
+        if (!commentsDiv) return;
+        
+        if (comments.length === 0) {
+            commentsDiv.innerHTML = '<p class="muted">Коментарів ще немає. Будьте першим!</p>';
+        } else {
+            commentsDiv.innerHTML = comments.map(comment => `
+                <div style="padding: 1rem; margin-bottom: 1rem; background: #f9fafb; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <div>
+                            <strong>${comment.username || 'Користувач'}</strong>
+                            <span style="color: #6b7280; font-size: 0.875rem; margin-left: 0.5rem;">
+                                ${new Date(comment.created_at).toLocaleString('uk-UA')}
+                            </span>
+                        </div>
+                        ${comment.is_own ? `
+                            <button class="btn ghost small" onclick="deleteComment(${comment.id})" style="color: #ef4444; font-size: 0.75rem;">Видалити</button>
+                        ` : ''}
+                    </div>
+                    <p style="margin: 0; white-space: pre-wrap;">${comment.comment_text}</p>
+                </div>
+            `).join('');
+        }
+        
+        // Show/hide comment form based on login status
+        const commentForm = document.getElementById('add-comment-form');
+        if (commentForm) {
+            if (window.userLoggedIn) {
+                commentForm.style.display = 'block';
+            } else {
+                commentForm.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+        const commentsDiv = document.getElementById('comments-container');
+        if (commentsDiv) {
+            commentsDiv.innerHTML = '<p class="muted">Помилка завантаження коментарів.</p>';
+        }
+    }
+}
+
+// Add comment
+async function addComment(event, matchId) {
+    event.preventDefault();
+    
+    if (!window.userLoggedIn) {
+        showFlash('Для додавання коментарів потрібно увійти до системи', 'warning');
+        window.location.href = '/login';
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const commentText = formData.get('comment_text').trim();
+    
+    if (!commentText) {
+        showFlash('Введіть текст коментаря', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/matches/${matchId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ comment_text: commentText })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.status === 'success') {
+            showFlash('Коментар додано!', 'success');
+            event.target.reset();
+            loadComments(matchId);
+        } else {
+            showFlash(result.error || 'Помилка додавання коментаря', 'danger');
+        }
+    } catch (error) {
+        showFlash('Помилка підключення до сервера', 'danger');
+        console.error('Add comment error:', error);
+    }
+}
+
+// Delete comment
+async function deleteComment(commentId) {
+    if (!confirm('Ви впевнені, що хочете видалити цей коментар?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/comments/${commentId}`, {
+            method: 'DELETE',
+            credentials: 'same-origin'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.status === 'success') {
+            showFlash('Коментар видалено', 'success');
+            if (currentMatchId) {
+                loadComments(currentMatchId);
+            }
+        } else {
+            showFlash(result.error || 'Помилка видалення', 'danger');
+        }
+    } catch (error) {
+        showFlash('Помилка підключення до сервера', 'danger');
+        console.error('Delete comment error:', error);
+    }
+}
+
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check user login status first
+    await checkUserLoginStatus();
+    // Update auth bar
+    updateAuthBar();
+    // Load matches
     loadMatches();
 });
 

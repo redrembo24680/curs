@@ -18,6 +18,8 @@
         <li><a href="/players">Гравці</a></li>
         <li><a href="/matches">Матчі</a></li>
         <li><a href="/stats" class="active">Статистика</a></li>
+        <li><a href="/posts">Новини</a></li>
+        <li><a href="/profile">Профіль</a></li>
         <li><a href="/health">Стан API</a></li>
     </ul>
     <div class="nav-meta">
@@ -131,10 +133,14 @@ async function loadStats() {
             select.innerHTML = '<option value="">-- Всі матчі --</option>' +
                 matches.map(m => {
                     const matchId = m.match_id || m.id || m.matchId || 0;
-                    const team1 = m.team1 || 'Команда 1';
-                    const team2 = m.team2 || 'Команда 2';
-                    return `<option value="${matchId}">${team1} vs ${team2}</option>`;
-                }).join('');
+                    const team1 = m.team1 || 'Невідома команда';
+                    const team2 = m.team2 || 'Невідома команда';
+                    // Only show if both teams have valid names
+                    if (team1 && team2 && team1 !== 'Невідома команда' && team2 !== 'Невідома команда') {
+                        return `<option value="${matchId}">${team1} vs ${team2}</option>`;
+                    }
+                    return null;
+                }).filter(opt => opt !== null).join('');
             
             // Remove old event listeners by cloning
             const newSelect = select.cloneNode(true);
@@ -173,8 +179,13 @@ async function loadStats() {
 function renderMatchStats(match) {
     const team1 = match.team1 || '';
     const team2 = match.team2 || '';
-    if (!team1 || !team2) {
-        document.getElementById('match-stats').innerHTML = '<p class="muted">Немає даних про команди.</p>';
+    // Check for invalid team names
+    if (!team1 || !team2 || 
+        team1.includes('Команда 1') || team1.includes('Команда 2') ||
+        team2.includes('Команда 1') || team2.includes('Команда 2') ||
+        team1.includes('Team 1') || team1.includes('Team 2') ||
+        team2.includes('Team 1') || team2.includes('Team 2')) {
+        document.getElementById('match-stats').innerHTML = '<p class="muted">Немає даних про команди або команди невалідні.</p>';
         return;
     }
     

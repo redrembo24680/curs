@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 
 import requests
 
-from config import API_BASE_URL, REQUEST_TIMEOUT, CACHE_TTL
+from config import API_BASE_URL, REQUEST_TIMEOUT, REQUEST_TIMEOUT_POST, CACHE_TTL
 
 # Global API cache
 _api_cache: Dict[str, Tuple[float, Any]] = {}
@@ -38,84 +38,98 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
     if cached and now - cached[0] <= CACHE_TTL:
         return cached[1]
 
-    try:
-        full_url = f"{API_BASE_URL}{endpoint}"
+    max_retries = 2
+    last_error = None
+    
+    for attempt in range(max_retries):
         try:
-            from flask import current_app
-            current_app.logger.debug(f"API GET: {full_url}")
-        except:
-            pass  # No Flask context, skip logging
-        response = requests.get(full_url, timeout=REQUEST_TIMEOUT)
-        response.raise_for_status()
-        data = response.json()
-        _api_cache[endpoint] = (now, data)
-        try:
-            from flask import current_app
-            current_app.logger.debug(
-                f"API GET {endpoint} returned {len(str(data))} bytes")
-        except:
-            pass  # No Flask context, skip logging
-        return data
-    except requests.ConnectionError as exc:
-        try:
-            from flask import current_app
-            current_app.logger.error("API GET %s connection error: %s. Is backend running at %s?",
-                                     endpoint, exc, API_BASE_URL)
-        except:
-            pass
-        return default if default is not None else {}
-    except requests.Timeout as exc:
-        try:
-            from flask import current_app
-            current_app.logger.error("API GET %s timeout: %s", endpoint, exc)
-        except:
-            pass
-        return default if default is not None else {}
-    except requests.RequestException as exc:
-        try:
-            from flask import current_app
-            current_app.logger.error("API GET %s failed: %s (type: %s)",
-                                     endpoint, exc, type(exc).__name__)
-        except:
-            pass
-        return default if default is not None else {}
+            full_url = f"{API_BASE_URL}{endpoint}"
+            response = requests.get(full_url, timeout=REQUEST_TIMEOUT)
+            response.raise_for_status()
+            data = response.json()
+            _api_cache[endpoint] = (now, data)
+            return data
+        except requests.ConnectionError as exc:
+            last_error = f"Backend not available at {API_BASE_URL}"
+            try:
+                from flask import current_app
+                current_app.logger.warning("API GET %s connection error (attempt %d/%d)", endpoint, attempt + 1, max_retries)
+            except:
+                pass
+            if attempt < max_retries - 1:
+                import time as time_module
+                time_module.sleep(0.3)
+                continue
+        except requests.Timeout as exc:
+            last_error = f"Timeout after {REQUEST_TIMEOUT}s"
+            try:
+                from flask import current_app
+                current_app.logger.warning("API GET %s timeout (attempt %d/%d)", endpoint, attempt + 1, max_retries)
+            except:
+                pass
+            if attempt < max_retries - 1:
+                continue
+        except requests.HTTPError as exc:
+            try:
+                from flask import current_app
+                current_app.logger.warning("API GET %s HTTP %s", endpoint, exc.response.status_code)
+            except:
+                pass
+            return default if default is not None else {}
+        except requests.RequestException as exc:
+            try:
+                from flask import current_app
+                current_app.logger.warning("API GET %s failed", endpoint)
+            except:
+                pass
+            return default if default is not None else {}
+    
+    return default if default is not None else {}
 
 
 def _post(endpoint: str, payload: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
-    """Make a POST request to the API."""
+    """Make a POST request to the API (no retry - backend is slow)."""
+    if not endpoint.startswith("/"):
+        endpoint = "/" + endpoint
+    
     try:
         response = requests.post(
             f"{API_BASE_URL}{endpoint}",
-            data=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
-            headers={'Content-Type': 'application/json'},
-            timeout=REQUEST_TIMEOUT
+            json=payload,
+            timeout=REQUEST_TIMEOUT_POST  # Use longer timeout for POST
         )
         response.raise_for_status()
         return True, response.json()
     except requests.ConnectionError as exc:
-        error_msg = f"Backend server is not available at {API_BASE_URL}. Please ensure the C++ server is running."
+        error_msg = f"Backend server is not available at {API_BASE_URL}"
         try:
             from flask import current_app
-            current_app.logger.error(
-                "API POST %s connection error: %s", endpoint, exc)
+            current_app.logger.error("API POST %s connection error: %s", endpoint, exc)
         except:
             pass
         return False, {"status": "error", "message": error_msg}
     except requests.Timeout as exc:
+        error_msg = f"Request timeout after {REQUEST_TIMEOUT_POST}s - backend is too slow"
         try:
             from flask import current_app
-            current_app.logger.error("API POST %s timeout: %s", endpoint, exc)
+            current_app.logger.error("API POST %s timeout", endpoint)
         except:
             pass
-        return False, {"status": "error", "message": f"Request timeout: {exc}"}
+        return False, {"status": "error", "message": error_msg}
+    except requests.HTTPError as exc:
+        try:
+            from flask import current_app
+            current_app.logger.error("API POST %s HTTP error %s", endpoint, exc.response.status_code)
+        except:
+            pass
+        return False, {"status": "error", "message": f"Server error: {exc.response.status_code}"}
     except requests.RequestException as exc:
         try:
             from flask import current_app
-            current_app.logger.error("API POST %s failed: %s (type: %s)",
-                                     endpoint, exc, type(exc).__name__)
+            current_app.logger.error("API POST %s failed", endpoint)
         except:
             pass
-        return False, {"status": "error", "message": str(exc)}
+        return False, {"status": "error", "message": "Request failed"}
 
 
 def _invalidate_cache(*endpoints: str) -> None:

@@ -45,7 +45,33 @@ def init_user_db() -> None:
             match_id INTEGER NOT NULL,
             player_id INTEGER NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, match_id),
+            UNIQUE(user_id, player_id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+    # Comments table for matches
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS match_comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            match_id INTEGER NOT NULL,
+            comment_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+    # Posts table for news/announcements
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
         """

@@ -1,6 +1,7 @@
-"""Authentication routes."""
-from flask import Blueprint, send_file, request, redirect, url_for, session, flash
+"""Authentication routes - completely rewritten."""
+from flask import Blueprint, send_file, request, redirect, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from urllib.parse import quote
 import os
 
 from utils.database import get_db
@@ -16,12 +17,10 @@ def register():
         password = request.form.get("password", "").strip()
         
         if not username or not password:
-            flash("Логін та пароль обов'язкові", "danger")
-            return redirect(url_for("auth.register"))
+            return redirect(f"/register?error={quote('Введіть логін та пароль')}")
         
         if len(password) < 6:
-            flash("Пароль має містити мінімум 6 символів", "danger")
-            return redirect(url_for("auth.register"))
+            return redirect(f"/register?error={quote('Пароль має містити мінімум 6 символів')}")
         
         db = get_db()
         try:
@@ -30,12 +29,10 @@ def register():
                 (username, generate_password_hash(password))
             )
             db.commit()
-            flash("Реєстрація успішна! Тепер ви можете увійти.", "success")
-            return redirect(url_for("auth.login"))
-        except Exception as e:
+            return redirect(f"/login?success={quote('Реєстрація успішна! Тепер ви можете увійти.')}")
+        except Exception:
             db.rollback()
-            flash("Користувач з таким логіном вже існує", "danger")
-            return redirect(url_for("auth.register"))
+            return redirect(f"/register?error={quote('Користувач з таким логіном вже існує')}")
     
     # GET request - serve static HTML
     from flask import current_app
@@ -45,28 +42,37 @@ def register():
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    """User login."""
+    """User login - completely rewritten."""
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         
         if not username or not password:
-            flash("Введіть логін та пароль", "danger")
-            return redirect(url_for("auth.login"))
+            return redirect(f"/login?error={quote('Введіть логін та пароль')}")
         
         db = get_db()
         user = db.execute(
-            "SELECT * FROM users WHERE username = ?", (username,)
+            "SELECT id, username, password, role FROM users WHERE username = ?", (username,)
         ).fetchone()
         
         if user and check_password_hash(user["password"], password):
+            # COMPLETELY CLEAR SESSION FIRST
             session.clear()
+            
+            # SET ALL SESSION DATA
             session["user_id"] = user["id"]
-            flash(f"Вітаємо, {username}!", "success")
-            return redirect(url_for("dashboard.dashboard"))
+            session["username"] = user["username"]
+            session["role"] = user["role"]
+            session.permanent = True
+            session.modified = True
+            
+            # Force session save
+            from flask import current_app
+            current_app.logger.info(f"User {username} logged in, session user_id={session.get('user_id')}, role={session.get('role')}")
+            
+            return redirect(f"/?success={quote(f'Вітаємо, {username}!')}")
         else:
-            flash("Невірний логін або пароль", "danger")
-            return redirect(url_for("auth.login"))
+            return redirect(f"/login?error={quote('Невірний логін або пароль')}")
     
     # GET request - serve static HTML
     from flask import current_app
@@ -76,8 +82,56 @@ def login():
 
 @bp.route("/logout")
 def logout():
-    """User logout - redirect to home."""
+    """User logout."""
     session.clear()
-    flash("Ви вийшли з системи", "info")
-    return redirect(url_for("dashboard.dashboard"))
+    return redirect(f"/?info={quote('Ви вийшли з системи')}")
 
+
+@bp.route("/api/user-info")
+def user_info():
+    """Get current user info - completely rewritten."""
+    # First check session
+    user_id = session.get("user_id")
+    
+    if not user_id:
+        return jsonify({"logged_in": False})
+    
+    # Try to get from session first (faster)
+    username = session.get("username")
+    role = session.get("role")
+    
+    # If session has all data, return it
+    if username and role:
+        return jsonify({
+            "logged_in": True,
+            "username": username,
+            "role": role
+        })
+    
+    # Otherwise, load from database
+    try:
+        db = get_db()
+        user = db.execute(
+            "SELECT id, username, role FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        
+        if user:
+            # Update session with missing data
+            if not username:
+                session["username"] = user["username"]
+            if not role:
+                session["role"] = user["role"]
+            session.modified = True
+            
+            return jsonify({
+                "logged_in": True,
+                "username": user["username"],
+                "role": user["role"]
+            })
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error loading user info: {e}")
+    
+    # If user not found, clear session
+    session.clear()
+    return jsonify({"logged_in": False})

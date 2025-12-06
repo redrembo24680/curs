@@ -19,6 +19,8 @@
         <li><a href="/players">Гравці</a></li>
         <li><a href="/matches" class="active">Матчі</a></li>
         <li><a href="/stats">Статистика</a></li>
+        <li><a href="/posts">Новини</a></li>
+        <li><a href="/profile">Профіль</a></li>
         <li><a href="/health">Стан API</a></li>
     </ul>
     <div class="nav-meta">
@@ -90,7 +92,7 @@
                     <label for="home-formation" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
                         Формація господарів:
                     </label>
-                    <select id="home-formation" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                    <select id="home-formation" style="width: 100%; padding: 0.75rem; font-size: 1rem;" disabled>
                         <option value="4-3-3">4-3-3</option>
                         <option value="4-4-2">4-4-2</option>
                         <option value="4-2-3-1">4-2-3-1</option>
@@ -104,7 +106,7 @@
                     <label for="away-formation" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
                         Формація гостей:
                     </label>
-                    <select id="away-formation" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                    <select id="away-formation" style="width: 100%; padding: 0.75rem; font-size: 1rem;" disabled>
                         <option value="4-3-3">4-3-3</option>
                         <option value="4-4-2">4-4-2</option>
                         <option value="4-2-3-1">4-2-3-1</option>
@@ -148,6 +150,24 @@
             <div class="card">
                 <h3 id="away-team-name">Гості - Рейтинг</h3>
                 <div class="stats-list" id="away-stats"></div>
+            </div>
+        </section>
+
+        <!-- Comments Section -->
+        <section class="section">
+            <div class="card">
+                <h3>Коментарі до матчу</h3>
+                <div id="comments-container" style="margin-top: 1rem;">
+                    <p class="muted">Завантаження коментарів...</p>
+                </div>
+                
+                <div id="add-comment-form" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                    <form id="comment-form" class="form">
+                        <label for="comment-text">Додати коментар</label>
+                        <textarea id="comment-text" name="comment_text" rows="3" placeholder="Напишіть ваш коментар..." required></textarea>
+                        <button type="submit" class="btn primary">Відправити</button>
+                    </form>
+                </div>
             </div>
         </section>
     </section>

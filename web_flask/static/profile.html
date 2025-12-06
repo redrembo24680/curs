@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профіль · Система голосування</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">⚽ Голосування</div>
+    <ul class="nav-links">
+        <li><a href="/">Головна</a></li>
+        <li><a href="/players">Гравці</a></li>
+        <li><a href="/matches">Матчі</a></li>
+        <li><a href="/stats">Статистика</a></li>
+        <li><a href="/posts">Новини</a></li>
+        <li><a href="/profile" class="active">Профіль</a></li>
+        <li><a href="/health">Стан API</a></li>
+    </ul>
+    <div class="nav-meta">
+        <div class="stats-bar" id="stats-bar">
+            <span>👥 0 гравців</span>
+            <span>🏟️ 0 матчів</span>
+            <span>🗳️ 0 голосів</span>
+        </div>
+        <div class="auth-bar" id="auth-bar">
+            <a class="btn ghost" href="/login">Увійти</a>
+            <a class="btn primary small" href="/register">Реєстрація</a>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <div id="flash-container"></div>
+
+    <section class="section">
+        <div class="card">
+            <h2>Мій профіль</h2>
+            <div id="user-info" style="margin-bottom: 2rem;">
+                <p class="muted">Завантаження...</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="card">
+            <h2>Історія голосувань</h2>
+            <div id="votes-history" style="margin-top: 1rem;">
+                <p class="muted">Завантаження...</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+</footer>
+
+<script src="/static/app.js"></script>
+<script>
+async function loadUserInfo() {
+    try {
+        const response = await fetch('/api/user-info', {
+            credentials: 'same-origin'
+        });
+        const userInfo = await response.json();
+        
+        const userInfoDiv = document.getElementById('user-info');
+        if (userInfo.logged_in) {
+            userInfoDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: bold;">
+                        ${(userInfo.username || 'U')[0].toUpperCase()}
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">${userInfo.username || 'Користувач'}</h3>
+                        <p style="margin: 0.25rem 0 0 0; color: #6b7280;">
+                            ${userInfo.role === 'admin' ? 'Адміністратор' : 'Вболівальник'}
+                        </p>
+                    </div>
+                </div>
+            `;
+        } else {
+            userInfoDiv.innerHTML = '<p class="muted">Потрібно увійти до системи</p>';
+        }
+    } catch (error) {
+        console.error('Error loading user info:', error);
+    }
+}
+
+async function loadVotesHistory() {
+    try {
+        const response = await fetch('/api/profile/votes', {
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const votes = data.votes || [];
+        const votesDiv = document.getElementById('votes-history');
+        
+        if (votes.length === 0) {
+            votesDiv.innerHTML = '<p class="muted">Ви ще не голосували в жодному матчі.</p>';
+            return;
+        }
+        
+        votesDiv.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Матч</th>
+                        <th>Гравець</th>
+                        <th>Позиція</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${votes.map(vote => `
+                        <tr>
+                            <td>${new Date(vote.created_at).toLocaleString('uk-UA')}</td>
+                            <td><strong>${vote.match.team1 || 'Команда 1'}</strong> vs <strong>${vote.match.team2 || 'Команда 2'}</strong></td>
+                            <td>${vote.player.name || 'Невідомо'}</td>
+                            <td>${vote.player.position || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (error) {
+        console.error('Error loading votes history:', error);
+        document.getElementById('votes-history').innerHTML = '<p class="muted">Помилка завантаження історії голосувань.</p>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadGlobalStats();
+    loadUserInfo();
+    loadVotesHistory();
+    
+    // Update auth bar
+    const authBar = document.getElementById('auth-bar');
+    if (authBar) {
+        fetch('/api/user-info', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(userInfo => {
+                if (userInfo.logged_in) {
+                    authBar.innerHTML = `
+                        <span class="user-pill" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 20px; font-size: 0.9rem;">
+                            ${userInfo.username || 'Користувач'}
+                            ${userInfo.role === 'admin' ? '<small style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #10b981; color: white; border-radius: 10px; font-size: 0.75rem;">Admin</small>' : ''}
+                        </span>
+                        <a class="btn ghost" href="/logout">Вийти</a>
+                    `;
+                } else {
+                    window.location.href = '/login';
+                }
+            });
+    }
+});
+</script>
+</body>
+</html>
+
+

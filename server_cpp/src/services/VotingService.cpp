@@ -158,6 +158,15 @@ std::vector<MatchStats> VotingService::collectMatchStats() const {
         // Load saved stats if available
         if (m_matchStats.count(matchId) > 0) {
             stats = m_matchStats.at(matchId);
+            // Always update team names and date from match (in case they're empty in stats)
+            if (stats.team1.empty() || stats.team2.empty()) {
+                stats.team1 = match.getTeam1();
+                stats.team2 = match.getTeam2();
+            }
+            if (stats.date.empty()) {
+                stats.date = match.getDate();
+            }
+            stats.isActive = match.isActive();
         } else {
             // Initialize with defaults
             stats.matchId = matchId;

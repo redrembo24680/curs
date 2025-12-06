@@ -194,6 +194,8 @@ switch ($choice) {
         $flaskCmd = "$pythonCmd -m flask run --port 5000"
         Start-InNewWindow "Flask Web Frontend" $flaskCmd $webFlaskPath
         
+        Start-Sleep -Seconds 3
+        
         Write-Host ""
         Write-Host "[OK] Web Frontend started!" -ForegroundColor Green
         Write-Host "Open browser: http://localhost:5000" -ForegroundColor Cyan
@@ -259,6 +261,8 @@ switch ($choice) {
         
         $flaskCmd = "$pythonCmd -m flask run --port 5000"
         Start-InNewWindow "Flask Web Frontend" $flaskCmd $webFlaskPath
+        
+        Start-Sleep -Seconds 3
         
         Write-Host ""
         Write-Host "All components started!" -ForegroundColor Green

@@ -62,6 +62,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     loadGlobalStats();
+    
+    // Check for error messages in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    
+    if (error) {
+        showFlash(decodeURIComponent(error), 'danger');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 });
 </script>
 </body>
