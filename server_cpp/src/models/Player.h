@@ -1,3 +1,5 @@
+#include <ostream>
+    friend std::ostream& operator<<(std::ostream& os, const Player& player);
 #pragma once
 
 #include <string>

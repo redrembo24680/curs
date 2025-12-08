@@ -213,6 +213,11 @@ std::string ApiController::handleVote(const std::map<std::string, std::string>& 
         return R"({"status":"error","message":"match_id та player_id є обов'язковими"})";
     }
 
+    // ООП: створення користувача (fan)
+    int userId = 1;
+    Fan user(userId, "DemoFan");
+    // std::cout << "User " << user.getName() << " (role: " << user.getRole() << ") проголосував за гравця " << playerIt->second << std::endl;
+
     int matchId = std::stoi(matchIt->second);
     int playerId = std::stoi(playerIt->second);
     std::string error;

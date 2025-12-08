@@ -4,6 +4,7 @@
 #include <string>
 
 #include "services/VotingService.h"
+#include "models/User.h"
 
 class ApiController {
 public:

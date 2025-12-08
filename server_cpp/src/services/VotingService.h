@@ -9,17 +9,19 @@
 #include "models/Player.h"
 #include "models/Team.h"
 #include "models/Stats.h"
+
 #include "models/MatchStats.h"
 #include "storage/SqliteStore.h"
+#include "IVoteService.h"
 
-class VotingService {
+class VotingService : public IVoteService {
 public:
     explicit VotingService(const std::string& dataDirectory);
 
     Team addTeam(const std::string& name);
     Player addPlayer(const std::string& name, const std::string& position, int teamId);
     Match addMatch(const std::string& team1, const std::string& team2, const std::string& team1Formation = "4-3-3", const std::string& team2Formation = "4-3-3");
-    bool recordVote(int matchId, int playerId, std::string& errorMessage);
+    bool recordVote(int matchId, int playerId, std::string& errorMessage) override;
 
     std::vector<Team> listTeams() const;
     std::vector<Player> listPlayers() const;

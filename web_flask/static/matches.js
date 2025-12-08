@@ -134,7 +134,7 @@ async function loadMatches() {
     // Show all matches - don't filter aggressively
     // We'll just handle empty rosters when loading match data
     const validMatches = matches;
-    
+
     // Check user login status and update UI
     await checkUserLoginStatus();
     updateAuthBar();
@@ -186,13 +186,13 @@ async function loadMatches() {
 // Handle match creation
 async function handleCreateMatch(event) {
     event.preventDefault();
-    
+
     // Check if user is admin
     if (!window.currentUser || window.currentUser.role !== 'admin') {
         showFlash('Тільки адміністратори можуть створювати матчі', 'danger');
         return;
     }
-    
+
     const formData = new FormData(event.target);
     const matchData = {
         team1: formData.get('team1'),
@@ -224,15 +224,15 @@ async function checkUserLoginStatus() {
                 'Cache-Control': 'no-cache'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const userInfo = await response.json();
         window.userLoggedIn = userInfo.logged_in || false;
         window.currentUser = userInfo.logged_in ? userInfo : null;
-        
+
         // If user is logged in, load their global vote history (all players they voted for)
         if (window.userLoggedIn) {
             try {
@@ -268,7 +268,7 @@ async function checkUserVoteStatus(matchId) {
         userVotedPlayerIds = [];
         return;
     }
-    
+
     let lastError = null;
     for (let attempt = 0; attempt < 2; attempt++) {
         try {
@@ -278,7 +278,7 @@ async function checkUserVoteStatus(matchId) {
                     'Accept': 'application/json'
                 }
             });
-            
+
             if (!response.ok) {
                 if (attempt === 0) {
                     await new Promise(r => setTimeout(r, 300)); // Wait before retry
@@ -286,17 +286,17 @@ async function checkUserVoteStatus(matchId) {
                 }
                 throw new Error(`HTTP ${response.status}`);
             }
-            
+
             const status = await response.json();
             userHasVoted = status.has_voted || false;
-        
+
             // Update list of players user voted for
             if (status.player_ids && Array.isArray(status.player_ids)) {
                 userVotedPlayerIds = status.player_ids;
             } else {
                 userVotedPlayerIds = [];
             }
-            
+
             if (status.has_voted && status.player_id) {
                 votedPlayerId = status.player_id;
             } else {
@@ -311,7 +311,7 @@ async function checkUserVoteStatus(matchId) {
             }
         }
     }
-    
+
     // If all retries failed
     console.warn('Could not load vote status:', lastError);
     userHasVoted = false;
@@ -322,7 +322,7 @@ async function checkUserVoteStatus(matchId) {
 async function updateAuthBar() {
     const authBar = document.getElementById('auth-bar');
     if (!authBar) return;
-    
+
     try {
         const response = await fetch('/api/user-info', {
             method: 'GET',
@@ -332,13 +332,13 @@ async function updateAuthBar() {
                 'Cache-Control': 'no-cache'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const userInfo = await response.json();
-        
+
         if (userInfo.logged_in) {
             authBar.innerHTML = `
                 <span class="user-pill" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 20px; font-size: 0.9rem;">
@@ -369,7 +369,7 @@ async function loadMatchData(matchId) {
     // Check user login and vote status FIRST
     await checkUserLoginStatus();
     await checkUserVoteStatus(matchId);
-    
+
     // Reset vote status if match changed
     if (currentMatchId !== matchId) {
         userHasVoted = false;
@@ -381,8 +381,8 @@ async function loadMatchData(matchId) {
     const match = pageData.matches.find(m => m.id === matchId);
     if (!match) return;
 
-    // Get votes
-    const votesData = await api.get(`/votes/${matchId}`, { votes: [] });
+    // Get votes from Flask DB (fast, local - not from C++ API)
+    const votesData = await fetch(`/api/match-votes/${matchId}`).then(r => r.json()).catch(() => ({ votes: [] }));
     const votesMap = {};
     (votesData.votes || []).forEach(v => {
         votesMap[v.player_id] = v.votes;
@@ -444,10 +444,10 @@ async function loadMatchData(matchId) {
     renderStats(homeRoster, awayRoster, match);
 
     document.getElementById('pitch-section').style.display = 'block';
-    
+
     // Load comments for this match
     loadComments(matchId);
-    
+
     // Setup comment form
     const commentForm = document.getElementById('comment-form');
     if (commentForm) {
@@ -784,7 +784,7 @@ function openPlayerModal(player, teamName, side) {
         window.location.href = '/login';
         return;
     }
-    
+
     // Check if user already voted for THIS SPECIFIC PLAYER
     if (userVotedPlayerIds && userVotedPlayerIds.includes(player.id)) {
         showFlash('Ви вже проголосували за цього гравця', 'warning');
@@ -812,7 +812,7 @@ function openPlayerModal(player, teamName, side) {
 async function submitVote(event, playerId) {
     event.preventDefault();
     if (!currentMatchId) return;
-    
+
     // Check if user is logged in
     if (!window.userLoggedIn) {
         showFlash('Для голосування потрібно увійти до системи', 'danger');
@@ -840,37 +840,40 @@ async function submitVote(event, playerId) {
                 match_id: currentMatchId
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok && result.status === 'success') {
             showFlash('✓ Голос успішно зараховано!', 'success');
             document.getElementById('playerModal').style.display = 'none';
-            
+
             // Add player to voted list
             if (!userVotedPlayerIds.includes(playerId)) {
                 userVotedPlayerIds.push(playerId);
             }
-            
+
             userHasVoted = true;
             votedPlayerId = playerId;
-            
-            // Invalidate cache for votes to force refresh next time
-            // But don't reload entire match - just update the votes display
+
+            // Log vote for diagnostics
+            console.log(`Vote submitted: player ${playerId} in match ${currentMatchId}`);
+
+            // Reload match data after a delay to get updated votes from C++ API
+            // Use 1.5s delay to ensure backend processing is complete
             setTimeout(() => {
-                // Small delay to ensure backend processed the vote
+                console.log('Reloading match data...');
                 loadMatchData(currentMatchId).catch(e => console.error('Error reloading match:', e));
-            }, 500);
+            }, 1500);
         } else {
             const errorMsg = result.message || 'Помилка голосування';
             showFlash(errorMsg, 'danger');
-            
+
             // Re-enable button on error
             if (voteButton) {
                 voteButton.disabled = false;
                 voteButton.textContent = 'Проголосувати за цього гравця';
             }
-            
+
             // If user already voted, update status
             if (errorMsg.includes('вже проголосували') || result.has_voted) {
                 userHasVoted = true;
@@ -879,7 +882,7 @@ async function submitVote(event, playerId) {
                 }
                 // Don't reload - user already voted message is enough
             }
-            
+
             if (errorMsg.includes('увійти') || response.status === 401) {
                 setTimeout(() => window.location.href = '/login', 2000);
             }
@@ -887,7 +890,7 @@ async function submitVote(event, playerId) {
     } catch (error) {
         showFlash('Помилка підключення до сервера', 'danger');
         console.error('Vote error:', error);
-        
+
         // Re-enable button on error
         if (voteButton) {
             voteButton.disabled = false;
@@ -949,15 +952,15 @@ document.querySelector('.modal-close')?.addEventListener('click', () => {
 // Load comments for match
 async function loadComments(matchId) {
     if (!matchId) return;
-    
+
     try {
         const response = await fetch(`/api/matches/${matchId}/comments`);
         const data = await response.json();
         const comments = data.comments || [];
         const commentsDiv = document.getElementById('comments-container');
-        
+
         if (!commentsDiv) return;
-        
+
         if (comments.length === 0) {
             commentsDiv.innerHTML = '<p class="muted">Коментарів ще немає. Будьте першим!</p>';
         } else {
@@ -978,7 +981,7 @@ async function loadComments(matchId) {
                 </div>
             `).join('');
         }
-        
+
         // Show/hide comment form based on login status
         const commentForm = document.getElementById('add-comment-form');
         if (commentForm) {
@@ -1000,21 +1003,21 @@ async function loadComments(matchId) {
 // Add comment
 async function addComment(event, matchId) {
     event.preventDefault();
-    
+
     if (!window.userLoggedIn) {
         showFlash('Для додавання коментарів потрібно увійти до системи', 'warning');
         window.location.href = '/login';
         return;
     }
-    
+
     const formData = new FormData(event.target);
     const commentText = formData.get('comment_text').trim();
-    
+
     if (!commentText) {
         showFlash('Введіть текст коментаря', 'warning');
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/matches/${matchId}/comments`, {
             method: 'POST',
@@ -1024,9 +1027,9 @@ async function addComment(event, matchId) {
             credentials: 'same-origin',
             body: JSON.stringify({ comment_text: commentText })
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok && result.status === 'success') {
             showFlash('Коментар додано!', 'success');
             event.target.reset();
@@ -1045,15 +1048,15 @@ async function deleteComment(commentId) {
     if (!confirm('Ви впевнені, що хочете видалити цей коментар?')) {
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/comments/${commentId}`, {
             method: 'DELETE',
             credentials: 'same-origin'
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok && result.status === 'success') {
             showFlash('Коментар видалено', 'success');
             if (currentMatchId) {

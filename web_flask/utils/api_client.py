@@ -40,7 +40,7 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
 
     max_retries = 2
     last_error = None
-    
+
     for attempt in range(max_retries):
         try:
             full_url = f"{API_BASE_URL}{endpoint}"
@@ -53,7 +53,8 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
             last_error = f"Backend not available at {API_BASE_URL}"
             try:
                 from flask import current_app
-                current_app.logger.warning("API GET %s connection error (attempt %d/%d)", endpoint, attempt + 1, max_retries)
+                current_app.logger.warning(
+                    "API GET %s connection error (attempt %d/%d)", endpoint, attempt + 1, max_retries)
             except:
                 pass
             if attempt < max_retries - 1:
@@ -64,7 +65,8 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
             last_error = f"Timeout after {REQUEST_TIMEOUT}s"
             try:
                 from flask import current_app
-                current_app.logger.warning("API GET %s timeout (attempt %d/%d)", endpoint, attempt + 1, max_retries)
+                current_app.logger.warning(
+                    "API GET %s timeout (attempt %d/%d)", endpoint, attempt + 1, max_retries)
             except:
                 pass
             if attempt < max_retries - 1:
@@ -72,7 +74,8 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
         except requests.HTTPError as exc:
             try:
                 from flask import current_app
-                current_app.logger.warning("API GET %s HTTP %s", endpoint, exc.response.status_code)
+                current_app.logger.warning(
+                    "API GET %s HTTP %s", endpoint, exc.response.status_code)
             except:
                 pass
             return default if default is not None else {}
@@ -83,7 +86,7 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
             except:
                 pass
             return default if default is not None else {}
-    
+
     return default if default is not None else {}
 
 
@@ -91,7 +94,7 @@ def _post(endpoint: str, payload: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]
     """Make a POST request to the API (no retry - backend is slow)."""
     if not endpoint.startswith("/"):
         endpoint = "/" + endpoint
-    
+
     try:
         response = requests.post(
             f"{API_BASE_URL}{endpoint}",
@@ -104,7 +107,8 @@ def _post(endpoint: str, payload: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]
         error_msg = f"Backend server is not available at {API_BASE_URL}"
         try:
             from flask import current_app
-            current_app.logger.error("API POST %s connection error: %s", endpoint, exc)
+            current_app.logger.error(
+                "API POST %s connection error: %s", endpoint, exc)
         except:
             pass
         return False, {"status": "error", "message": error_msg}
@@ -119,7 +123,8 @@ def _post(endpoint: str, payload: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]
     except requests.HTTPError as exc:
         try:
             from flask import current_app
-            current_app.logger.error("API POST %s HTTP error %s", endpoint, exc.response.status_code)
+            current_app.logger.error(
+                "API POST %s HTTP error %s", endpoint, exc.response.status_code)
         except:
             pass
         return False, {"status": "error", "message": f"Server error: {exc.response.status_code}"}

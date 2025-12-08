@@ -50,6 +50,42 @@ def init_user_db() -> None:
         )
         """
     )
+    # Cache table for players (synced from C++ API)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cached_players (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            position TEXT,
+            team_id INTEGER,
+            votes INTEGER DEFAULT 0,
+            synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    # Cache table for matches (synced from C++ API)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cached_matches (
+            id INTEGER PRIMARY KEY,
+            team1 TEXT NOT NULL,
+            team2 TEXT NOT NULL,
+            date TEXT,
+            is_active BOOLEAN DEFAULT 1,
+            synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    # Cache table for teams (synced from C++ API)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cached_teams (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
     # Comments table for matches
     conn.execute(
         """
@@ -86,4 +122,3 @@ def init_user_db() -> None:
         )
         conn.commit()
     conn.close()
-

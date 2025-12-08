@@ -67,7 +67,24 @@ function showFlash(message, type = 'info') {
 
 // Load global stats
 async function loadGlobalStats() {
-    const stats = await api.get('/stats', { total_players: 0, total_matches: 0, total_votes: 0 });
+    // Try to get stats from Flask local DB first (fast)
+    let stats;
+    try {
+        const response = await fetch('/api/flask-stats', {
+            credentials: 'same-origin',
+            headers: {'Accept': 'application/json'}
+        });
+        if (response.ok) {
+            stats = await response.json();
+        } else {
+            // Fallback to C++ API
+            stats = await api.get('/stats', { total_players: 0, total_matches: 0, total_votes: 0 });
+        }
+    } catch (err) {
+        console.log('Could not fetch Flask stats, trying C++ API', err);
+        stats = await api.get('/stats', { total_players: 0, total_matches: 0, total_votes: 0 });
+    }
+    
     const statsBar = document.getElementById('stats-bar');
     if (statsBar) {
         statsBar.innerHTML = `

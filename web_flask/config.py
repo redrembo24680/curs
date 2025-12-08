@@ -12,7 +12,8 @@ SESSION_DIR.mkdir(exist_ok=True)
 # API Configuration
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8080/api")
 REQUEST_TIMEOUT = float(os.getenv("API_TIMEOUT", "5.0"))
-REQUEST_TIMEOUT_POST = float(os.getenv("API_TIMEOUT_POST", "5.0"))  # Not used for voting anymore
+# Not used for voting anymore
+REQUEST_TIMEOUT_POST = float(os.getenv("API_TIMEOUT_POST", "5.0"))
 CACHE_TTL = float(os.getenv("API_CACHE_TTL", "5.0"))
 
 # Flask Configuration
@@ -21,4 +22,3 @@ SESSION_FILE_DIR = str(SESSION_DIR)
 
 # Stats Cache Configuration
 STATS_CACHE_TTL = 10.0  # Cache stats for 10 seconds
-

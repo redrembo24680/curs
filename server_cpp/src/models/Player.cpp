@@ -1,3 +1,9 @@
+
+std::ostream& operator<<(std::ostream& os, const Player& player) {
+    os << "Player[ID=" << player.m_id << ", Name=" << player.m_name << ", Position=" << player.m_position
+       << ", TeamID=" << player.m_teamId << ", Votes=" << player.m_votes << "]";
+    return os;
+}
 #include "Player.h"
 
 Player::Player(int id, std::string name, std::string position, int teamId, int votes)
