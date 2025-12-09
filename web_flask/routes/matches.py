@@ -45,10 +45,11 @@ def vote():
             (user_id, match_id, player_id)
         )
         db.commit()
-        
+
         # Log successful vote for diagnostics
         from flask import current_app
-        current_app.logger.info(f"Vote recorded: user_id={user_id}, match_id={match_id}, player_id={player_id}")
+        current_app.logger.info(
+            f"Vote recorded: user_id={user_id}, match_id={match_id}, player_id={player_id}")
 
         return jsonify({"status": "success", "message": "Голос зараховано"})
 
@@ -161,7 +162,8 @@ def match_votes(match_id):
             (match_id,)
         ).fetchall()
 
-        votes_list = [{"player_id": v["player_id"], "votes": v["votes"]} for v in votes]
+        votes_list = [{"player_id": v["player_id"],
+                       "votes": v["votes"]} for v in votes]
         return jsonify({"match_id": match_id, "votes": votes_list})
     except Exception as e:
         from flask import current_app
@@ -179,29 +181,30 @@ def players_info():
         if cached:
             players = [dict(p) for p in cached]
             return jsonify({"players": players})
-        
+
         # If cache empty, fetch from C++ API and cache
         import requests
         from utils.api_client import API_BASE_URL
-        
+
         resp = requests.get(f"{API_BASE_URL}/players", timeout=3)
         if resp.status_code == 200:
             players_data = resp.json().get("players", [])
-            
+
             # Cache players
             for p in players_data:
                 db.execute(
                     """INSERT OR REPLACE INTO cached_players (id, name, position, team_id, votes)
                        VALUES (?, ?, ?, ?, ?)""",
-                    (p.get("id"), p.get("name"), p.get("position"), p.get("team_id"), p.get("votes", 0))
+                    (p.get("id"), p.get("name"), p.get("position"),
+                     p.get("team_id"), p.get("votes", 0))
                 )
             db.commit()
-            
+
             return jsonify({"players": players_data})
     except Exception as e:
         from flask import current_app
         current_app.logger.debug(f"Error getting players info: {e}")
-    
+
     return jsonify({"players": []}), 500
 
 
@@ -215,29 +218,30 @@ def matches_info():
         if cached:
             matches = [dict(m) for m in cached]
             return jsonify({"matches": matches})
-        
+
         # If cache empty, fetch from C++ API and cache
         import requests
         from utils.api_client import API_BASE_URL
-        
+
         resp = requests.get(f"{API_BASE_URL}/matches-page", timeout=3)
         if resp.status_code == 200:
             matches_data = resp.json().get("matches", [])
-            
+
             # Cache matches
             for m in matches_data:
                 db.execute(
                     """INSERT OR REPLACE INTO cached_matches (id, team1, team2, date, is_active)
                        VALUES (?, ?, ?, ?, ?)""",
-                    (m.get("id"), m.get("team1"), m.get("team2"), m.get("date"), m.get("isActive", 1))
+                    (m.get("id"), m.get("team1"), m.get("team2"),
+                     m.get("date"), m.get("isActive", 1))
                 )
             db.commit()
-            
+
             return jsonify({"matches": matches_data})
     except Exception as e:
         from flask import current_app
         current_app.logger.debug(f"Error getting matches info: {e}")
-    
+
     return jsonify({"matches": []}), 500
 
 
@@ -246,10 +250,13 @@ def flask_stats():
     """Get statistics from Flask DB (votes count, etc.)."""
     db = get_db()
     try:
-        total_players = db.execute("SELECT COUNT(*) as count FROM cached_players").fetchone()["count"]
-        total_matches = db.execute("SELECT COUNT(*) as count FROM cached_matches").fetchone()["count"]
-        total_votes = db.execute("SELECT COUNT(*) as count FROM user_votes").fetchone()["count"]
-        
+        total_players = db.execute(
+            "SELECT COUNT(*) as count FROM cached_players").fetchone()["count"]
+        total_matches = db.execute(
+            "SELECT COUNT(*) as count FROM cached_matches").fetchone()["count"]
+        total_votes = db.execute(
+            "SELECT COUNT(*) as count FROM user_votes").fetchone()["count"]
+
         return jsonify({
             "total_players": total_players,
             "total_matches": total_matches,

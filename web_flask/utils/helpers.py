@@ -17,14 +17,14 @@ def build_roster(team: Dict[str, Any] | None, votes: Dict[int, int], side: str) 
     """Build roster with player positions on the pitch."""
     if not team:
         return []
-    
+
     from utils.api_client import _get
-    
+
     team_name = team.get("name")
     team_id = team.get("id")
     if not team_name and not team_id:
         return []
-    
+
     # Load all players from API and filter by team_id
     players_data = _get("/players", default={"players": []}).get("players", [])
     if team_id:
@@ -32,13 +32,13 @@ def build_roster(team: Dict[str, Any] | None, votes: Dict[int, int], side: str) 
     else:
         team_players = [p for p in players_data if _normalize(
             p.get("team_name", "")) == _normalize(team_name)]
-    
+
     roster = []
     for player in team_players:
         player_id = player.get("id")
         player_name = player.get("name", "")
         position = player.get("position", "")
-        
+
         # Default positions for players based on position code
         position_map = {
             "GK": {"x": 8, "y": 50},      # Goalkeeper - back center
@@ -54,16 +54,16 @@ def build_roster(team: Dict[str, Any] | None, votes: Dict[int, int], side: str) 
             "ST": {"x": 60, "y": 50},      # Striker - forward center
             "CF": {"x": 60, "y": 50},      # Center Forward - forward center
         }
-        
+
         default_pos = position_map.get(position, {"x": 35, "y": 50})
         base_x = default_pos["x"]
         base_y = default_pos["y"]
-        
+
         # Apply slight randomization to avoid overlapping players
         random.seed(player_id if player_id else hash(player_name))
         offset_x = random.uniform(-2, 2)
         offset_y = random.uniform(-3, 3)
-        
+
         if side == "home":
             # Home team (Left side of pitch)
             x = max(5, min(48, base_x + offset_x))
@@ -87,4 +87,3 @@ def build_roster(team: Dict[str, Any] | None, votes: Dict[int, int], side: str) 
             "votes": votes.get(player_id, 0) if player_id else 0,
         })
     return roster
-

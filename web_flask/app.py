@@ -52,15 +52,15 @@ def create_app() -> Flask:
     def load_logged_in_user():
         """Load logged in user from session."""
         user_id = session.get("user_id")
-        
+
         if not user_id:
             g.user = None
             return
-        
+
         # Try to get from session first
         username = session.get("username")
         role = session.get("role")
-        
+
         # If we have all session data, create user dict
         if username and role:
             g.user = {
@@ -69,20 +69,20 @@ def create_app() -> Flask:
                 "role": role
             }
             return
-        
+
         # Otherwise, load from database
         try:
             db = get_db()
             user = db.execute(
                 "SELECT id, username, role FROM users WHERE id = ?", (user_id,)
             ).fetchone()
-            
+
             if user:
                 # Update session with user data
                 session["username"] = user["username"]
                 session["role"] = user["role"]
                 session.modified = True
-                
+
                 g.user = {
                     "id": user["id"],
                     "username": user["username"],
