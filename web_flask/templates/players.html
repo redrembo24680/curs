@@ -60,7 +60,6 @@
     <table>
         <thead>
             <tr>
-                <th>ID</th>
                 <th>Ім'я</th>
                 <th>Команда</th>
                 <th>Позиція</th>
@@ -70,7 +69,6 @@
         <tbody>
             {% for player in players %}
             <tr>
-                <td>{{ player.id }}</td>
                 <td>{{ player.name }}</td>
                 <td>
                     {% for team in teams %}
@@ -94,7 +92,6 @@
         {% for team in teams %}
             <div class="team-card">
                 <h3>{{ team.name }}</h3>
-                <p class="muted">ID: {{ team.id }}</p>
             </div>
         {% endfor %}
     </div>

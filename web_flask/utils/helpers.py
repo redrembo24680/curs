@@ -74,7 +74,7 @@ def build_roster(team: Dict[str, Any] | None, votes: Dict[int, int], side: str) 
             y = max(10, min(90, 100 - base_y - offset_y))
 
         short_name = player_name.split()[-1] if player_name else ""
-        number = player.get("number", "")
+        number = short_name  # Use short_name instead of empty number
 
         roster.append({
             "name": player_name,

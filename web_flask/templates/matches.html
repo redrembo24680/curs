@@ -115,7 +115,7 @@
                             type="button"
                             {% if not player.player_id or not current_user or user_has_voted %}disabled{% else %}onclick="return openPlayerModal(this, {{ player.player_id }}, '{{ player.name|e }}', '{{ player.position|e }}', {{ player.votes }}, '{{ home_team.name|e if home_team else 'Господарі' }}', 'home');"{% endif %}
                             title="{{ player.name }}">
-                        {{ player.number }}
+                        {{ player.short_name }}
                         <span class="player-name-visible">{{ player.short_name }}</span>
                         <div class="player-info">
                             <span class="player-name">{{ player.name }}</span>
@@ -132,7 +132,7 @@
                             type="button"
                             {% if not player.player_id or not current_user or user_has_voted %}disabled{% else %}onclick="return openPlayerModal(this, {{ player.player_id }}, '{{ player.name|e }}', '{{ player.position|e }}', {{ player.votes }}, '{{ away_team.name|e if away_team else 'Гості' }}', 'away');"{% endif %}
                             title="{{ player.name }}">
-                        {{ player.number }}
+                        {{ player.short_name }}
                         <span class="player-name-visible">{{ player.short_name }}</span>
                         <div class="player-info">
                             <span class="player-name">{{ player.name }}</span>
