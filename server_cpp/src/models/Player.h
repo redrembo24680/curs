@@ -1,8 +1,7 @@
-#include <ostream>
-    friend std::ostream& operator<<(std::ostream& os, const Player& player);
 #pragma once
 
 #include <string>
+#include <ostream>
 
 class Player {
 public:
@@ -19,6 +18,8 @@ public:
     void updatePosition(const std::string& newPosition);
     void setTeamId(int teamId);
     void incrementVote();
+
+    friend std::ostream& operator<<(std::ostream& os, const Player& player);
 
 private:
     int m_id{0};

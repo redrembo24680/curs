@@ -3,6 +3,7 @@ from flask import Flask, g, session
 from config import SECRET_KEY
 from utils.database import get_db, close_db, init_user_db
 from utils.api_client import get_cached_stats
+from utils.logger import setup_logger
 from routes import (
     auth_bp, dashboard_bp, matches_bp, players_bp,
     stats_bp, admin_bp, health_bp, profile_bp, comments_bp, posts_bp
@@ -14,6 +15,10 @@ def create_app() -> Flask:
     app = Flask(__name__, static_folder='static', static_url_path='/static')
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
+
+    # Setup logging
+    setup_logger(app)
+    app.logger.info('Flask application starting...')
 
     # Ensure static files are served with correct headers
     @app.after_request

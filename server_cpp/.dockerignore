@@ -1,0 +1,25 @@
+# Ігноруємо Windows build артефакти
+build/
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.lib
+*.dll
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/
+
+# Ігноруємо IDE файли
+.vs/
+.vscode/
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.user
+
+# Ігноруємо тимчасові файли
+*.tmp
+*.log
+*.swp
+*~

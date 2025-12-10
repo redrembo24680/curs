@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Flask Frontend
+  flask:
+    build:
+      context: ./web_flask
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./web_flask:/app
+      - flask_logs:/app/logs
+    environment:
+      - FLASK_ENV=production
+      - API_BASE_URL=http://cpp_backend:8080
+    depends_on:
+      - cpp_backend
+    restart: unless-stopped
+    networks:
+      - voting_network
+
+  # C++ Backend
+  cpp_backend:
+    build:
+      context: ./server_cpp
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server_cpp/data:/app/data
+    environment:
+      - DATA_DIR=/app/data
+    networks:
+      - voting_network
+    restart: unless-stopped
+
+networks:
+  voting_network:
+    driver: bridge
+
+volumes:
+  flask_logs:

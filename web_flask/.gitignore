@@ -1,5 +1,12 @@
 flask_session/
 __pycache__/
+logs/
+*.log
+*.db
+*.sqlite
+.pytest_cache/
+htmlcov/
+.coverage
 
 
 

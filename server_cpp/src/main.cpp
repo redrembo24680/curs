@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <iostream>
+#include <cstring>
 
 #include "controllers/ApiController.h"
 #include "http/HttpServer.h"
@@ -8,33 +9,41 @@
 int main(int argc, char* argv[]) {
     try {
         namespace fs = std::filesystem;
-        fs::path exeDir = (argc > 0) ? fs::path(argv[0]).parent_path() : fs::current_path();
         
-        // Determine data directory path
-        // Try to find server_cpp/data relative to executable location
+        // Check for DATA_DIR environment variable first (for Docker)
+        const char* envDataDir = std::getenv("DATA_DIR");
         fs::path dataDir;
         
-        // If running from build/bin/Release/voting_server.exe
-        // Go up: build/bin/Release -> build/bin -> build -> server_cpp -> data
-        fs::path try1 = fs::weakly_canonical(exeDir / ".." / ".." / ".." / "data");
-        // If running from build/Release/voting_server.exe  
-        // Go up: build/Release -> build -> server_cpp -> data
-        fs::path try2 = fs::weakly_canonical(exeDir / ".." / ".." / "data");
-        
-        // Check if server_cpp directory exists in parent paths
-        if (fs::exists(try1.parent_path() / "src") || fs::exists(try1.parent_path() / "CMakeLists.txt")) {
-            dataDir = try1;
-        } else if (fs::exists(try2.parent_path() / "src") || fs::exists(try2.parent_path() / "CMakeLists.txt")) {
-            dataDir = try2;
+        if (envDataDir && std::strlen(envDataDir) > 0) {
+            // Use environment variable if set
+            dataDir = fs::path(envDataDir);
+            std::cout << "Using DATA_DIR from environment: " << dataDir.string() << std::endl;
         } else {
-            // Fallback: use server_cpp/data from project root
-            // Go up from exe: build/bin/Release -> build/bin -> build -> .. -> server_cpp/data
-            fs::path projectRoot = fs::weakly_canonical(exeDir / ".." / ".." / ".." / ".." / "server_cpp" / "data");
-            if (fs::exists(projectRoot.parent_path())) {
-                dataDir = projectRoot;
+            // Fallback to relative path detection for local development
+            fs::path exeDir = (argc > 0) ? fs::path(argv[0]).parent_path() : fs::current_path();
+            
+            // If running from build/bin/Release/voting_server.exe
+            // Go up: build/bin/Release -> build/bin -> build -> server_cpp -> data
+            fs::path try1 = fs::weakly_canonical(exeDir / ".." / ".." / ".." / "data");
+            // If running from build/Release/voting_server.exe  
+            // Go up: build/Release -> build -> server_cpp -> data
+            fs::path try2 = fs::weakly_canonical(exeDir / ".." / ".." / "data");
+            
+            // Check if server_cpp directory exists in parent paths
+            if (fs::exists(try1.parent_path() / "src") || fs::exists(try1.parent_path() / "CMakeLists.txt")) {
+                dataDir = try1;
+            } else if (fs::exists(try2.parent_path() / "src") || fs::exists(try2.parent_path() / "CMakeLists.txt")) {
+                dataDir = try2;
             } else {
-                // Last resort: use build/data
-                dataDir = fs::weakly_canonical(exeDir / ".." / "data");
+                // Fallback: use server_cpp/data from project root
+                // Go up from exe: build/bin/Release -> build/bin -> build -> .. -> server_cpp/data
+                fs::path projectRoot = fs::weakly_canonical(exeDir / ".." / ".." / ".." / ".." / "server_cpp" / "data");
+                if (fs::exists(projectRoot.parent_path())) {
+                    dataDir = projectRoot;
+                } else {
+                    // Last resort: use build/data
+                    dataDir = fs::weakly_canonical(exeDir / ".." / "data");
+                }
             }
         }
         
