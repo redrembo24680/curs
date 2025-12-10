@@ -19,7 +19,7 @@ def matches():
 @bp.route("/api/vote", methods=["POST"])
 @login_required
 def vote():
-    """Vote for a player - requires authentication. Store vote locally in Flask DB."""
+    """Vote for a player - requires authentication. Syncs to both Flask DB and C++ backend."""
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"status": "error", "message": "Потрібно увійти до системи"}), 401
@@ -31,50 +31,59 @@ def vote():
     if not match_id or not player_id:
         return jsonify({"status": "error", "message": "match_id та player_id є обов'язковими"}), 400
 
-    # Save vote in Flask database (local storage)
-    db = get_db()
+    # 1. First, send vote to C++ backend (main source of truth)
     try:
-        # Ensure table exists
-        from utils.database import init_user_db
-        init_user_db()
-
-        # Try to insert vote
-        db.execute(
-            "INSERT INTO user_votes (user_id, match_id, player_id) VALUES (?, ?, ?)",
-            (user_id, match_id, player_id)
-        )
-        db.commit()
-
-        # Log successful vote for diagnostics
-        from flask import current_app
-        current_app.logger.info(
-            f"Vote recorded: user_id={user_id}, match_id={match_id}, player_id={player_id}")
-
-        return jsonify({"status": "success", "message": "Голос зараховано"})
-
-    except sqlite3.IntegrityError:
-        # UNIQUE constraint violation - user already voted for this player
-        db.rollback()
-        return jsonify({
-            "status": "error",
-            "message": "Ви вже проголосували за цього гравця",
-            "has_voted": True
-        }), 400
+        vote_response = _post("/vote", {"match_id": match_id, "player_id": player_id})
+        
+        if vote_response and vote_response.get("status") == "success":
+            # Vote accepted by C++ backend, now save to Flask DB for tracking
+            db = get_db()
+            try:
+                from utils.database import init_user_db
+                init_user_db()
+                
+                db.execute(
+                    "INSERT INTO user_votes (user_id, match_id, player_id) VALUES (?, ?, ?)",
+                    (user_id, match_id, player_id)
+                )
+                db.commit()
+                
+                from flask import current_app
+                current_app.logger.info(
+                    f"Vote synced: user_id={user_id}, match_id={match_id}, player_id={player_id}")
+            except sqlite3.IntegrityError:
+                # Already voted locally, but C++ backend accepted it
+                db.rollback()
+            except Exception as e:
+                from flask import current_app
+                current_app.logger.warning(f"Vote sent to backend but local save failed: {e}")
+            
+            return jsonify({"status": "success", "message": "Голос зараховано"})
+        else:
+            # C++ backend rejected the vote
+            error_msg = vote_response.get("message", "Помилка при голосуванні") if vote_response else "Помилка з'єднання з сервером"
+            return jsonify({"status": "error", "message": error_msg}), 400
+            
     except Exception as e:
-        db.rollback()
-        # Table might not exist, try to create it
+        from flask import current_app
+        current_app.logger.error(f"Error sending vote to backend: {e}")
+        
+        # Fallback: save locally only if backend is unavailable
+        db = get_db()
         try:
             from utils.database import init_user_db
             init_user_db()
-            # Try again after creating table
+            
             db.execute(
                 "INSERT INTO user_votes (user_id, match_id, player_id) VALUES (?, ?, ?)",
                 (user_id, match_id, player_id)
             )
             db.commit()
-            return jsonify({"status": "success", "message": "Голос зараховано"})
+            return jsonify({
+                "status": "success", 
+                "message": "Голос збережено локально (backend недоступний)"
+            })
         except sqlite3.IntegrityError:
-            # Still unique constraint violation
             db.rollback()
             return jsonify({
                 "status": "error",
@@ -82,7 +91,7 @@ def vote():
             }), 400
         except Exception as e2:
             from flask import current_app
-            current_app.logger.error(f"Error saving vote to DB: {e2}")
+            current_app.logger.error(f"Error saving vote locally: {e2}")
             return jsonify({
                 "status": "error",
                 "message": "Помилка збереження голосу"
@@ -246,26 +255,31 @@ def matches_info():
 
 @bp.route("/api/flask-stats")
 def flask_stats():
-    """Get statistics from Flask DB (votes count, etc.)."""
-    db = get_db()
+    """Get statistics from C++ backend API."""
     try:
-        total_players = db.execute(
-            "SELECT COUNT(*) as count FROM cached_players").fetchone()["count"]
-        total_matches = db.execute(
-            "SELECT COUNT(*) as count FROM cached_matches").fetchone()["count"]
-        total_votes = db.execute(
-            "SELECT COUNT(*) as count FROM user_votes").fetchone()["count"]
-
-        return jsonify({
-            "total_players": total_players,
-            "total_matches": total_matches,
-            "total_votes": total_votes
-        })
+        # Get data directly from C++ backend
+        from utils.api_client import _get
+        from flask import current_app
+        current_app.logger.info("flask_stats: calling _get('/api/stats')")
+        stats = _get("/api/stats")
+        current_app.logger.info(f"flask_stats: received stats = {stats}")
+        
+        if stats:
+            return jsonify(stats)
+        else:
+            current_app.logger.warning("flask_stats: stats is empty")
+            return jsonify({
+                "total_players": 0,
+                "total_matches": 0,
+                "total_votes": 0,
+                "active_matches": 0
+            })
     except Exception as e:
         from flask import current_app
-        current_app.logger.debug(f"Error getting stats: {e}")
+        current_app.logger.error(f"Error getting stats from backend: {e}", exc_info=True)
         return jsonify({
             "total_players": 0,
             "total_matches": 0,
-            "total_votes": 0
+            "total_votes": 0,
+            "active_matches": 0
         }), 500

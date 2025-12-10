@@ -13,7 +13,7 @@ services:
       - flask_logs:/app/logs
     environment:
       - FLASK_ENV=production
-      - API_BASE_URL=http://cpp_backend:8080
+      - API_BASE_URL=http://cpp_backend:8080/api
     depends_on:
       - cpp_backend
     restart: unless-stopped

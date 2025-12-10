@@ -21,17 +21,18 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
     if not endpoint.startswith("/"):
         endpoint = "/" + endpoint
 
-    # API_BASE_URL already includes /api, so we should NOT add /api prefix
-    # Only normalize the endpoint path
+    # API_BASE_URL is http://cpp_backend:8080/api
+    # If endpoint already has /api prefix, don't add it again
+    # Just pass endpoint as-is to be appended to base URL
+    # For example: _get("/api/stats") -> http://cpp_backend:8080/api + /api/stats (WRONG)
+    # We need to remove /api from endpoint: /api/stats -> /stats
+    # Then: http://cpp_backend:8080/api + /stats = http://cpp_backend:8080/api/stats (CORRECT)
     if endpoint.startswith("/api/"):
-        endpoint = endpoint[4:]  # Remove /api prefix
+        endpoint = endpoint[4:]  # Remove "/api" prefix, keep the slash: "/api/stats" -> "/stats"
     elif endpoint.startswith("/api"):
-        endpoint = endpoint[4:]  # Remove /api prefix
-
-    if endpoint in ["/", ""]:
-        endpoint = "/"
-    elif not endpoint.startswith("/"):
-        endpoint = "/" + endpoint
+        endpoint = endpoint[4:]  # Remove "/api" prefix: "/api" -> ""
+        if not endpoint.startswith("/"):
+            endpoint = "/" + endpoint
 
     now = time.time()
     cached = _api_cache.get(endpoint)
@@ -44,9 +45,19 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
     for attempt in range(max_retries):
         try:
             full_url = f"{API_BASE_URL}{endpoint}"
+            try:
+                from flask import current_app
+                current_app.logger.info(f"API GET request: {full_url}")
+            except:
+                pass
             response = requests.get(full_url, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             data = response.json()
+            try:
+                from flask import current_app
+                current_app.logger.info(f"API GET response: {data}")
+            except:
+                pass
             _api_cache[endpoint] = (now, data)
             return data
         except requests.ConnectionError as exc:
