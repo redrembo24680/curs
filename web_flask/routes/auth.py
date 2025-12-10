@@ -1,5 +1,5 @@
 """Authentication routes - completely rewritten."""
-from flask import Blueprint, send_file, request, redirect, session, jsonify
+from flask import Blueprint, send_from_directory, request, redirect, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import quote
 import os
@@ -36,9 +36,7 @@ def register():
 
     # GET request - serve static HTML
     from flask import current_app
-    static_path = os.path.join(
-        current_app.root_path, 'static', 'register.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'register.html')
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -79,8 +77,7 @@ def login():
 
     # GET request - serve static HTML
     from flask import current_app
-    static_path = os.path.join(current_app.root_path, 'static', 'login.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'login.html')
 
 
 @bp.route("/logout")

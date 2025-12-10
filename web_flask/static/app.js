@@ -44,9 +44,9 @@ const api = new APIClient();
 function formatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('uk-UA', { 
-        year: 'numeric', 
-        month: 'long', 
+    return date.toLocaleDateString('uk-UA', {
+        year: 'numeric',
+        month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -56,12 +56,12 @@ function formatDate(dateString) {
 function showFlash(message, type = 'info') {
     const flashContainer = document.getElementById('flash-container');
     if (!flashContainer) return;
-    
+
     const flash = document.createElement('div');
     flash.className = `flash flash-${type}`;
     flash.textContent = message;
     flashContainer.appendChild(flash);
-    
+
     setTimeout(() => flash.remove(), 5000);
 }
 
@@ -72,7 +72,7 @@ async function loadGlobalStats() {
     try {
         const response = await fetch('/api/flask-stats', {
             credentials: 'same-origin',
-            headers: {'Accept': 'application/json'}
+            headers: { 'Accept': 'application/json' }
         });
         if (response.ok) {
             stats = await response.json();
@@ -84,7 +84,7 @@ async function loadGlobalStats() {
         console.log('Could not fetch Flask stats, trying C++ API', err);
         stats = await api.get('/stats', { total_players: 0, total_matches: 0, total_votes: 0 });
     }
-    
+
     const statsBar = document.getElementById('stats-bar');
     if (statsBar) {
         statsBar.innerHTML = `
@@ -99,7 +99,7 @@ async function loadGlobalStats() {
 async function loadUserInfo() {
     const authBar = document.getElementById('auth-bar');
     const loginTip = document.getElementById('login-tip');
-    
+
     try {
         const response = await fetch('/api/user-info', {
             method: 'GET',
@@ -109,13 +109,13 @@ async function loadUserInfo() {
                 'Cache-Control': 'no-cache'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const userInfo = await response.json();
-        
+
         if (userInfo.logged_in) {
             // User is logged in - update auth bar
             if (authBar) {
@@ -163,11 +163,11 @@ async function loadUserInfo() {
 document.addEventListener('DOMContentLoaded', () => {
     loadGlobalStats();
     loadUserInfo();
-    
+
     // Set active nav link
     const currentPath = window.location.pathname;
     document.querySelectorAll('.nav-links a').forEach(link => {
-        if (link.getAttribute('href') === currentPath || 
+        if (link.getAttribute('href') === currentPath ||
             (currentPath === '/' && link.getAttribute('href') === '/index.html')) {
             link.classList.add('active');
         }

@@ -1,5 +1,5 @@
 """Posts/News routes."""
-from flask import Blueprint, send_file, request, jsonify, session
+from flask import Blueprint, send_from_directory, request, jsonify, session
 import os
 from utils.decorators import login_required, admin_required
 from utils.database import get_db
@@ -11,8 +11,7 @@ bp = Blueprint('posts', __name__)
 def posts():
     """Posts/News page."""
     from flask import current_app
-    static_path = os.path.join(current_app.root_path, 'static', 'posts.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'posts.html')
 
 
 @bp.route("/api/posts", methods=["GET"])
@@ -32,7 +31,7 @@ def get_posts():
             LEFT JOIN users u ON p.user_id = u.id
             ORDER BY p.created_at DESC
         """).fetchall()
-        
+
         posts_list = []
         for post in posts:
             posts_list.append({
@@ -44,7 +43,7 @@ def get_posts():
                 "created_at": post["created_at"],
                 "is_own": post["user_id"] == session.get("user_id")
             })
-        
+
         return jsonify({"posts": posts_list})
     except Exception as e:
         from flask import current_app
@@ -59,14 +58,14 @@ def create_post():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
-    
+
     data = request.get_json()
     title = data.get("title", "").strip()
     content = data.get("content", "").strip()
-    
+
     if not title or not content:
         return jsonify({"error": "Title and content are required"}), 400
-    
+
     db = get_db()
     try:
         cursor = db.execute("""
@@ -74,7 +73,7 @@ def create_post():
             VALUES (?, ?, ?)
         """, (user_id, title, content))
         db.commit()
-        
+
         return jsonify({
             "status": "success",
             "message": "Post created",
@@ -94,17 +93,17 @@ def delete_post(post_id):
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
-    
+
     db = get_db()
     try:
         # Check if post exists
         post = db.execute(
             "SELECT user_id FROM posts WHERE id = ?", (post_id,)
         ).fetchone()
-        
+
         if not post:
             return jsonify({"error": "Post not found"}), 404
-        
+
         # Only allow deleting own posts or if admin
         if post["user_id"] != user_id:
             # Check if user is admin
@@ -113,15 +112,13 @@ def delete_post(post_id):
             ).fetchone()
             if not user or user["role"] != "admin":
                 return jsonify({"error": "You can only delete your own posts"}), 403
-        
+
         db.execute("DELETE FROM posts WHERE id = ?", (post_id,))
         db.commit()
-        
+
         return jsonify({"status": "success", "message": "Post deleted"})
     except Exception as e:
         db.rollback()
         from flask import current_app
         current_app.logger.error(f"Error deleting post: {e}")
         return jsonify({"error": str(e)}), 500
-
-

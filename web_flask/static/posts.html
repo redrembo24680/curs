@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,115 +10,116 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
-<nav class="navbar">
-    <div class="logo">⚽ Голосування</div>
-    <ul class="nav-links">
-        <li><a href="/">Головна</a></li>
-        <li><a href="/players">Гравці</a></li>
-        <li><a href="/matches">Матчі</a></li>
-        <li><a href="/stats">Статистика</a></li>
-        <li><a href="/posts" class="active">Новини</a></li>
-        <li><a href="/profile">Профіль</a></li>
-        <li><a href="/health">Стан API</a></li>
-    </ul>
-    <div class="nav-meta">
-        <div class="stats-bar" id="stats-bar">
-            <span>👥 0 гравців</span>
-            <span>🏟️ 0 матчів</span>
-            <span>🗳️ 0 голосів</span>
+    <nav class="navbar">
+        <div class="logo">⚽ Голосування</div>
+        <ul class="nav-links">
+            <li><a href="/">Головна</a></li>
+            <li><a href="/players">Гравці</a></li>
+            <li><a href="/matches">Матчі</a></li>
+            <li><a href="/stats">Статистика</a></li>
+            <li><a href="/posts" class="active">Новини</a></li>
+            <li><a href="/profile">Профіль</a></li>
+            <li><a href="/health">Стан API</a></li>
+        </ul>
+        <div class="nav-meta">
+            <div class="stats-bar" id="stats-bar">
+                <span>👥 0 гравців</span>
+                <span>🏟️ 0 матчів</span>
+                <span>🗳️ 0 голосів</span>
+            </div>
+            <div class="auth-bar" id="auth-bar">
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
+            </div>
         </div>
-        <div class="auth-bar" id="auth-bar">
-            <a class="btn ghost" href="/login">Увійти</a>
-            <a class="btn primary small" href="/register">Реєстрація</a>
-        </div>
-    </div>
-</nav>
+    </nav>
 
-<main>
-    <div id="flash-container"></div>
+    <main>
+        <div id="flash-container"></div>
 
-    <section class="section">
-        <div class="card" id="create-post-card" style="display: none; margin-bottom: 2rem;">
-            <h2>Створити новину</h2>
-            <form id="create-post-form" class="form">
-                <label for="post-title">Заголовок</label>
-                <input type="text" id="post-title" name="title" placeholder="Заголовок новини" required>
-                
-                <label for="post-content">Текст</label>
-                <textarea id="post-content" name="content" rows="5" placeholder="Текст новини" required></textarea>
-                
-                <button type="submit" class="btn primary">Опублікувати</button>
-            </form>
-        </div>
-    </section>
+        <section class="section">
+            <div class="card" id="create-post-card" style="display: none; margin-bottom: 2rem;">
+                <h2>Створити новину</h2>
+                <form id="create-post-form" class="form">
+                    <label for="post-title">Заголовок</label>
+                    <input type="text" id="post-title" name="title" placeholder="Заголовок новини" required>
 
-    <section class="section">
-        <h2>Новини та оголошення</h2>
-        <div id="posts-list">
-            <p class="muted">Завантаження...</p>
-        </div>
-    </section>
-</main>
+                    <label for="post-content">Текст</label>
+                    <textarea id="post-content" name="content" rows="5" placeholder="Текст новини" required></textarea>
 
-<footer>
-    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
-</footer>
+                    <button type="submit" class="btn primary">Опублікувати</button>
+                </form>
+            </div>
+        </section>
 
-<script src="/static/app.js"></script>
-<script>
-let currentUser = null;
+        <section class="section">
+            <h2>Новини та оголошення</h2>
+            <div id="posts-list">
+                <p class="muted">Завантаження...</p>
+            </div>
+        </section>
+    </main>
 
-async function checkUserStatus() {
-    try {
-        const response = await fetch('/api/user-info', {
-            credentials: 'same-origin'
-        });
-        const userInfo = await response.json();
-        currentUser = userInfo.logged_in ? userInfo : null;
-        
-        // Show create post form only for admins
-        const createPostCard = document.getElementById('create-post-card');
-        if (createPostCard && currentUser && currentUser.role === 'admin') {
-            createPostCard.style.display = 'block';
-        }
-        
-        // Update auth bar
-        const authBar = document.getElementById('auth-bar');
-        if (authBar) {
-            if (userInfo.logged_in) {
-                authBar.innerHTML = `
+    <footer>
+        Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+    </footer>
+
+    <script src="/static/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function checkUserStatus() {
+            try {
+                const response = await fetch('/api/user-info', {
+                    credentials: 'same-origin'
+                });
+                const userInfo = await response.json();
+                currentUser = userInfo.logged_in ? userInfo : null;
+
+                // Show create post form only for admins
+                const createPostCard = document.getElementById('create-post-card');
+                if (createPostCard && currentUser && currentUser.role === 'admin') {
+                    createPostCard.style.display = 'block';
+                }
+
+                // Update auth bar
+                const authBar = document.getElementById('auth-bar');
+                if (authBar) {
+                    if (userInfo.logged_in) {
+                        authBar.innerHTML = `
                     <span class="user-pill" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 20px; font-size: 0.9rem;">
                         ${userInfo.username || 'Користувач'}
                         ${userInfo.role === 'admin' ? '<small style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #10b981; color: white; border-radius: 10px; font-size: 0.75rem;">Admin</small>' : ''}
                     </span>
                     <a class="btn ghost" href="/logout">Вийти</a>
                 `;
-            } else {
-                authBar.innerHTML = `
+                    } else {
+                        authBar.innerHTML = `
                     <a class="btn ghost" href="/login">Увійти</a>
                     <a class="btn primary small" href="/register">Реєстрація</a>
                 `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking user status:', error);
             }
         }
-    } catch (error) {
-        console.error('Error checking user status:', error);
-    }
-}
 
-async function loadPosts() {
-    try {
-        const response = await fetch('/api/posts');
-        const data = await response.json();
-        const posts = data.posts || [];
-        const postsDiv = document.getElementById('posts-list');
-        
-        if (posts.length === 0) {
-            postsDiv.innerHTML = '<p class="muted">Новин ще немає.</p>';
-            return;
-        }
-        
-        postsDiv.innerHTML = posts.map(post => `
+        async function loadPosts() {
+            try {
+                const response = await fetch('/api/posts');
+                const data = await response.json();
+                const posts = data.posts || [];
+                const postsDiv = document.getElementById('posts-list');
+
+                if (posts.length === 0) {
+                    postsDiv.innerHTML = '<p class="muted">Новин ще немає.</p>';
+                    return;
+                }
+
+                postsDiv.innerHTML = posts.map(post => `
             <div class="card" style="margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <div>
@@ -133,88 +135,87 @@ async function loadPosts() {
                 <p style="white-space: pre-wrap; line-height: 1.6;">${post.content}</p>
             </div>
         `).join('');
-    } catch (error) {
-        console.error('Error loading posts:', error);
-        document.getElementById('posts-list').innerHTML = '<p class="muted">Помилка завантаження новин.</p>';
-    }
-}
-
-async function createPost(event) {
-    event.preventDefault();
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-        showFlash('Тільки адміністратори можуть створювати новини', 'danger');
-        return;
-    }
-    
-    const formData = new FormData(event.target);
-    const postData = {
-        title: formData.get('title'),
-        content: formData.get('content')
-    };
-    
-    try {
-        const response = await fetch('/api/posts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify(postData)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.status === 'success') {
-            showFlash('Новину успішно створено!', 'success');
-            event.target.reset();
-            loadPosts();
-        } else {
-            showFlash(result.error || 'Помилка створення новини', 'danger');
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                document.getElementById('posts-list').innerHTML = '<p class="muted">Помилка завантаження новин.</p>';
+            }
         }
-    } catch (error) {
-        showFlash('Помилка підключення до сервера', 'danger');
-        console.error('Create post error:', error);
-    }
-}
 
-async function deletePost(postId) {
-    if (!confirm('Ви впевнені, що хочете видалити цю новину?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/posts/${postId}`, {
-            method: 'DELETE',
-            credentials: 'same-origin'
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.status === 'success') {
-            showFlash('Новину видалено', 'success');
-            loadPosts();
-        } else {
-            showFlash(result.error || 'Помилка видалення', 'danger');
+        async function createPost(event) {
+            event.preventDefault();
+
+            if (!currentUser || currentUser.role !== 'admin') {
+                showFlash('Тільки адміністратори можуть створювати новини', 'danger');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const postData = {
+                title: formData.get('title'),
+                content: formData.get('content')
+            };
+
+            try {
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(postData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    showFlash('Новину успішно створено!', 'success');
+                    event.target.reset();
+                    loadPosts();
+                } else {
+                    showFlash(result.error || 'Помилка створення новини', 'danger');
+                }
+            } catch (error) {
+                showFlash('Помилка підключення до сервера', 'danger');
+                console.error('Create post error:', error);
+            }
         }
-    } catch (error) {
-        showFlash('Помилка підключення до сервера', 'danger');
-        console.error('Delete post error:', error);
-    }
-}
 
-document.addEventListener('DOMContentLoaded', async () => {
-    loadGlobalStats();
-    await checkUserStatus();
-    loadPosts();
-    
-    const createPostForm = document.getElementById('create-post-form');
-    if (createPostForm) {
-        createPostForm.addEventListener('submit', createPost);
-    }
-});
-</script>
+        async function deletePost(postId) {
+            if (!confirm('Ви впевнені, що хочете видалити цю новину?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posts/${postId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin'
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    showFlash('Новину видалено', 'success');
+                    loadPosts();
+                } else {
+                    showFlash(result.error || 'Помилка видалення', 'danger');
+                }
+            } catch (error) {
+                showFlash('Помилка підключення до сервера', 'danger');
+                console.error('Delete post error:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadGlobalStats();
+            await checkUserStatus();
+            loadPosts();
+
+            const createPostForm = document.getElementById('create-post-form');
+            if (createPostForm) {
+                createPostForm.addEventListener('submit', createPost);
+            }
+        });
+    </script>
 </body>
+
 </html>
-
-

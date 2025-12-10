@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,117 +12,122 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
-<nav class="navbar">
-    <div class="logo">⚽ Голосування</div>
-    <ul class="nav-links">
-        <li><a href="/" class="active">Головна</a></li>
-        <li><a href="/players">Гравці</a></li>
-        <li><a href="/matches">Матчі</a></li>
-        <li><a href="/stats">Статистика</a></li>
-        <li><a href="/posts">Новини</a></li>
-        <li><a href="/profile">Профіль</a></li>
-        <li><a href="/health">Стан API</a></li>
-    </ul>
-    <div class="nav-meta">
-        <div class="stats-bar" id="stats-bar">
-            <span>👥 0 гравців</span>
-            <span>🏟️ 0 матчів</span>
-            <span>🗳️ 0 голосів</span>
+    <nav class="navbar">
+        <div class="logo">⚽ Голосування</div>
+        <ul class="nav-links">
+            <li><a href="/" class="active">Головна</a></li>
+            <li><a href="/players">Гравці</a></li>
+            <li><a href="/matches">Матчі</a></li>
+            <li><a href="/stats">Статистика</a></li>
+            <li><a href="/posts">Новини</a></li>
+            <li><a href="/profile">Профіль</a></li>
+            <li><a href="/health">Стан API</a></li>
+        </ul>
+        <div class="nav-meta">
+            <div class="stats-bar" id="stats-bar">
+                <span>👥 0 гравців</span>
+                <span>🏟️ 0 матчів</span>
+                <span>🗳️ 0 голосів</span>
+            </div>
+            <div class="auth-bar" id="auth-bar">
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
+            </div>
         </div>
-        <div class="auth-bar" id="auth-bar">
-            <a class="btn ghost" href="/login">Увійти</a>
-            <a class="btn primary small" href="/register">Реєстрація</a>
-        </div>
-    </div>
-</nav>
+    </nav>
 
-<main>
-    <div id="flash-container"></div>
+    <main>
+        <div id="flash-container"></div>
 
-    <section class="section intro">
-        <div>
-            <h1>Система Live-голосування за гравців матчу</h1>
-            <p class="muted">Інтерактивна платформа для голосування за найкращих гравців футбольних матчів у реальному часі.</p>
-        </div>
-    </section>
+        <section class="section intro">
+            <div>
+                <h1>Система Live-голосування за гравців матчу</h1>
+                <p class="muted">Інтерактивна платформа для голосування за найкращих гравців футбольних матчів у
+                    реальному часі.</p>
+            </div>
+        </section>
 
-    <section class="section">
-        <div class="card">
-            <h2>Про проект</h2>
-            <div style="line-height: 1.8;">
-                <p>
-                    <strong>Система Live-голосування</strong> — це веб-додаток, який дозволяє уболівальникам 
-                    голосувати за найкращих гравців під час футбольних матчів у реальному часі.
-                </p>
-                
-                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Основні можливості:</h3>
-                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
-                    <li><strong>Інтерактивне поле:</strong> Візуалізація розташування гравців на полі з можливістю голосування</li>
-                    <li><strong>Реальний час:</strong> Оновлення результатів голосування миттєво</li>
-                    <li><strong>Статистика:</strong> Детальна статистика по кожному гравцю та матчу</li>
-                    <li><strong>Безпека:</strong> Кожен користувач може проголосувати лише один раз за матч</li>
-                    <li><strong>Адміністрування:</strong> Можливість створювати матчі, додавати команди та гравців</li>
-                </ul>
-                
-                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Як це працює:</h3>
-                <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
-                    <li>Перейдіть на сторінку <a href="/matches">"Матчі"</a></li>
-                    <li>Оберіть активний матч</li>
-                    <li>Натисніть на гравця на полі, щоб віддати йому свій голос</li>
-                    <li>Переглядайте статистику голосування в реальному часі</li>
-                </ol>
-                
-                <div id="login-tip" style="margin-top: 2rem; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
-                    <p style="margin: 0;">
-                        <strong>💡 Порада:</strong> Для голосування потрібно 
-                        <a href="/login">увійти в систему</a>. 
-                        Якщо у вас немає облікового запису, ви можете 
-                        <a href="/register">зареєструватися</a> безкоштовно.
+        <section class="section">
+            <div class="card">
+                <h2>Про проект</h2>
+                <div style="line-height: 1.8;">
+                    <p>
+                        <strong>Система Live-голосування</strong> — це веб-додаток, який дозволяє уболівальникам
+                        голосувати за найкращих гравців під час футбольних матчів у реальному часі.
                     </p>
+
+                    <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Основні можливості:</h3>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li><strong>Інтерактивне поле:</strong> Візуалізація розташування гравців на полі з можливістю
+                            голосування</li>
+                        <li><strong>Реальний час:</strong> Оновлення результатів голосування миттєво</li>
+                        <li><strong>Статистика:</strong> Детальна статистика по кожному гравцю та матчу</li>
+                        <li><strong>Безпека:</strong> Кожен користувач може проголосувати лише один раз за матч</li>
+                        <li><strong>Адміністрування:</strong> Можливість створювати матчі, додавати команди та гравців
+                        </li>
+                    </ul>
+
+                    <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Як це працює:</h3>
+                    <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Перейдіть на сторінку <a href="/matches">"Матчі"</a></li>
+                        <li>Оберіть активний матч</li>
+                        <li>Натисніть на гравця на полі, щоб віддати йому свій голос</li>
+                        <li>Переглядайте статистику голосування в реальному часі</li>
+                    </ol>
+
+                    <div id="login-tip"
+                        style="margin-top: 2rem; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+                        <p style="margin: 0;">
+                            <strong>💡 Порада:</strong> Для голосування потрібно
+                            <a href="/login">увійти в систему</a>.
+                            Якщо у вас немає облікового запису, ви можете
+                            <a href="/register">зареєструватися</a> безкоштовно.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="section grid-two">
-        <div class="card">
-            <h2>Активні матчі</h2>
-            <div id="matches-list" style="margin-top: 1rem;">
-                <p class="muted">Завантаження...</p>
+        <section class="section grid-two">
+            <div class="card">
+                <h2>Активні матчі</h2>
+                <div id="matches-list" style="margin-top: 1rem;">
+                    <p class="muted">Завантаження...</p>
+                </div>
+                <p style="margin-top: 1rem; text-align: center;">
+                    <a href="/matches" class="btn primary" style="display: inline-block;">Перейти до голосування</a>
+                </p>
             </div>
-            <p style="margin-top: 1rem; text-align: center;">
-                <a href="/matches" class="btn primary" style="display: inline-block;">Перейти до голосування</a>
-            </p>
-        </div>
 
-        <div class="card">
-            <h2>Статистика системи</h2>
-            <div id="system-stats" style="margin-top: 1rem;">
-                <p class="muted">Завантаження...</p>
+            <div class="card">
+                <h2>Статистика системи</h2>
+                <div id="system-stats" style="margin-top: 1rem;">
+                    <p class="muted">Завантаження...</p>
+                </div>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
 
-<footer>
-    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
-</footer>
+    <footer>
+        Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+    </footer>
 
-<script src="/static/app.js"></script>
-<script>
-// Load matches
-async function loadMatches() {
-    const data = await api.get('/matches-page', { matches: [], teams: [] });
-    const matches = data.matches || [];
-    const matchesList = document.getElementById('matches-list');
-    
-    if (matches.length === 0) {
-        matchesList.innerHTML = '<p class="muted">Немає активних матчів. Створіть новий матч у вкладці "Матчі".</p>';
-        return;
-    }
-    
-    matchesList.innerHTML = matches.map(match => `
+    <script src="/static/app.js"></script>
+    <script>
+        // Load matches
+        async function loadMatches() {
+            const data = await api.get('/matches-page', { matches: [], teams: [] });
+            const matches = data.matches || [];
+            const matchesList = document.getElementById('matches-list');
+
+            if (matches.length === 0) {
+                matchesList.innerHTML = '<p class="muted">Немає активних матчів. Створіть новий матч у вкладці "Матчі".</p>';
+                return;
+            }
+
+            matchesList.innerHTML = matches.map(match => `
         <div class="match-item" style="padding: 0.75rem; margin-bottom: 0.5rem; background: ${match.isActive ? '#f0fdf4' : '#f9fafb'}; border-radius: 6px; border-left: 3px solid ${match.isActive ? '#10b981' : '#6b7280'};">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -134,14 +140,14 @@ async function loadMatches() {
             </div>
         </div>
     `).join('');
-}
+        }
 
-// Load system stats
-async function loadSystemStats() {
-    const stats = await api.get('/stats', { total_players: 0, total_matches: 0, total_votes: 0 });
-    const statsDiv = document.getElementById('system-stats');
-    
-    statsDiv.innerHTML = `
+        // Load system stats
+        async function loadSystemStats() {
+            const stats = await api.get('/stats', { total_players: 0, total_matches: 0, total_votes: 0 });
+            const statsDiv = document.getElementById('system-stats');
+
+            statsDiv.innerHTML = `
         <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb;">
             <span>Всього матчів:</span>
             <strong>${stats.total_matches || 0}</strong>
@@ -155,39 +161,39 @@ async function loadSystemStats() {
             <strong>${stats.total_votes || 0}</strong>
         </div>
     `;
-}
+        }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadGlobalStats();
-    loadUserInfo();
-    loadMatches();
-    loadSystemStats();
-    
-    // Check for success/error/info messages in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
-    const success = urlParams.get('success');
-    const info = urlParams.get('info');
-    
-    if (error) {
-        showFlash(decodeURIComponent(error), 'danger');
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    if (success) {
-        showFlash(decodeURIComponent(success), 'success');
-        window.history.replaceState({}, document.title, window.location.pathname);
-        // Reload user info after successful login
-        setTimeout(() => loadUserInfo(), 500);
-    }
-    if (info) {
-        showFlash(decodeURIComponent(info), 'info');
-        window.history.replaceState({}, document.title, window.location.pathname);
-        // Reload user info after logout
-        setTimeout(() => loadUserInfo(), 500);
-    }
-});
-</script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGlobalStats();
+            loadUserInfo();
+            loadMatches();
+            loadSystemStats();
+
+            // Check for success/error/info messages in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const success = urlParams.get('success');
+            const info = urlParams.get('info');
+
+            if (error) {
+                showFlash(decodeURIComponent(error), 'danger');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            if (success) {
+                showFlash(decodeURIComponent(success), 'success');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Reload user info after successful login
+                setTimeout(() => loadUserInfo(), 500);
+            }
+            if (info) {
+                showFlash(decodeURIComponent(info), 'info');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Reload user info after logout
+                setTimeout(() => loadUserInfo(), 500);
+            }
+        });
+    </script>
 </body>
-</html>
 
+</html>

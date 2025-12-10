@@ -1,5 +1,5 @@
 """Matches routes."""
-from flask import Blueprint, send_file, request, jsonify, session
+from flask import Blueprint, send_from_directory, request, jsonify, session
 import os
 import sqlite3
 from utils.decorators import login_required
@@ -13,8 +13,7 @@ bp = Blueprint('matches', __name__)
 def matches():
     """Matches page - serve static HTML."""
     from flask import current_app
-    static_path = os.path.join(current_app.root_path, 'static', 'matches.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'matches.html')
 
 
 @bp.route("/api/vote", methods=["POST"])

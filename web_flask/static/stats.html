@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,93 +11,97 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
-<nav class="navbar">
-    <div class="logo">⚽ Голосування</div>
-    <ul class="nav-links">
-        <li><a href="/">Головна</a></li>
-        <li><a href="/players">Гравці</a></li>
-        <li><a href="/matches">Матчі</a></li>
-        <li><a href="/stats" class="active">Статистика</a></li>
-        <li><a href="/posts">Новини</a></li>
-        <li><a href="/profile">Профіль</a></li>
-        <li><a href="/health">Стан API</a></li>
-    </ul>
-    <div class="nav-meta">
-        <div class="stats-bar" id="stats-bar">
-            <span>👥 0 гравців</span>
-            <span>🏟️ 0 матчів</span>
-            <span>🗳️ 0 голосів</span>
-        </div>
-        <div class="auth-bar" id="auth-bar">
-            <a class="btn ghost" href="/login">Увійти</a>
-            <a class="btn primary small" href="/register">Реєстрація</a>
-        </div>
-    </div>
-</nav>
-
-<main>
-    <div id="flash-container"></div>
-
-    <section class="section intro">
-        <div>
-            <h1>Статистика системи</h1>
-            <p class="muted">Детальна статистика гравців та матчів</p>
-        </div>
-    </section>
-
-    <section class="section grid-two">
-        <div class="card">
-            <h2>🏆 Топ-10 гравців</h2>
-            <div id="top-players" class="top-players-list">
-                <p class="muted">Завантаження...</p>
+    <nav class="navbar">
+        <div class="logo">⚽ Голосування</div>
+        <ul class="nav-links">
+            <li><a href="/">Головна</a></li>
+            <li><a href="/players">Гравці</a></li>
+            <li><a href="/matches">Матчі</a></li>
+            <li><a href="/stats" class="active">Статистика</a></li>
+            <li><a href="/posts">Новини</a></li>
+            <li><a href="/profile">Профіль</a></li>
+            <li><a href="/health">Стан API</a></li>
+        </ul>
+        <div class="nav-meta">
+            <div class="stats-bar" id="stats-bar">
+                <span>👥 0 гравців</span>
+                <span>🏟️ 0 матчів</span>
+                <span>🗳️ 0 голосів</span>
+            </div>
+            <div class="auth-bar" id="auth-bar">
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
             </div>
         </div>
+    </nav>
 
-        <div class="card">
-            <h2>📊 Статистика матчів</h2>
-            <div style="margin-bottom: 1.5rem;">
-                <label for="match-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Оберіть матч:</label>
-                <select id="match-select" style="width: 100%; padding: 0.75rem;">
-                    <option value="">-- Всі матчі --</option>
-                </select>
+    <main>
+        <div id="flash-container"></div>
+
+        <section class="section intro">
+            <div>
+                <h1>Статистика системи</h1>
+                <p class="muted">Детальна статистика гравців та матчів</p>
             </div>
-            <div id="match-stats">
-                <p class="muted">Оберіть матч для перегляду статистики</p>
+        </section>
+
+        <section class="section grid-two">
+            <div class="card">
+                <h2>🏆 Топ-10 гравців</h2>
+                <div id="top-players" class="top-players-list">
+                    <p class="muted">Завантаження...</p>
+                </div>
             </div>
-        </div>
-    </section>
-</main>
 
-<footer>
-    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
-</footer>
+            <div class="card">
+                <h2>📊 Статистика матчів</h2>
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="match-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Оберіть
+                        матч:</label>
+                    <select id="match-select" style="width: 100%; padding: 0.75rem;">
+                        <option value="">-- Всі матчі --</option>
+                    </select>
+                </div>
+                <div id="match-stats">
+                    <p class="muted">Оберіть матч для перегляду статистики</p>
+                </div>
+            </div>
+        </section>
+    </main>
 
-<script src="/static/app.js"></script>
-<script>
-async function loadStats() {
-    try {
-        console.log('Loading stats...');
-        const data = await api.get('/stats-page', { matches: [], top_players: [] });
-        console.log('Stats data received:', data);
-        
-        const topPlayers = data.top_players || [];
-        const matches = data.matches || [];
-        
-        console.log('Top players:', topPlayers.length);
-        console.log('Matches:', matches.length);
-        
-        // Render top players
-        const topPlayersDiv = document.getElementById('top-players');
-        if (!topPlayersDiv) {
-            console.error('top-players element not found');
-            return;
-        }
-        
-        if (topPlayers.length === 0) {
-            topPlayersDiv.innerHTML = '<p class="muted">Недостатньо даних для побудови рейтингу.</p>';
-        } else {
-            topPlayersDiv.innerHTML = topPlayers.slice(0, 10).map((player, index) => `
+    <footer>
+        Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+    </footer>
+
+    <script src="/static/app.js"></script>
+    <script>
+        async function loadStats() {
+            try {
+                console.log('Loading stats...');
+                // Use Flask API endpoint which gets votes from Flask DB
+                const response = await fetch('/api/stats-page');
+                const data = await response.json();
+                console.log('Stats data received:', data);
+
+                const topPlayers = data.top_players || [];
+                const matches = data.matches || [];
+
+                console.log('Top players:', topPlayers.length);
+                console.log('Matches:', matches.length);
+
+                // Render top players
+                const topPlayersDiv = document.getElementById('top-players');
+                if (!topPlayersDiv) {
+                    console.error('top-players element not found');
+                    return;
+                }
+
+                if (topPlayers.length === 0) {
+                    topPlayersDiv.innerHTML = '<p class="muted">Недостатньо даних для побудови рейтингу.</p>';
+                } else {
+                    topPlayersDiv.innerHTML = topPlayers.slice(0, 10).map((player, index) => `
                 <div class="player-stat-item ${index < 3 ? 'top-three' : ''}">
                     <div class="player-rank">
                         <span class="rank-number">${index + 1}</span>
@@ -114,82 +119,82 @@ async function loadStats() {
                     </div>
                 </div>
             `).join('');
-        }
-        
-        // Render matches select
-        const select = document.getElementById('match-select');
-        if (!select) {
-            console.error('match-select element not found');
-            return;
-        }
-        
-        if (matches.length === 0) {
-            select.innerHTML = '<option value="">Немає матчів</option>';
-            const matchStatsDiv = document.getElementById('match-stats');
-            if (matchStatsDiv) {
-                matchStatsDiv.innerHTML = '<p class="muted">Немає матчів для відображення статистики.</p>';
-            }
-        } else {
-            select.innerHTML = '<option value="">-- Всі матчі --</option>' +
-                matches.map(m => {
-                    const matchId = m.match_id || m.id || m.matchId || 0;
-                    const team1 = m.team1 || 'Невідома команда';
-                    const team2 = m.team2 || 'Невідома команда';
-                    // Only show if both teams have valid names
-                    if (team1 && team2 && team1 !== 'Невідома команда' && team2 !== 'Невідома команда') {
-                        return `<option value="${matchId}">${team1} vs ${team2}</option>`;
-                    }
-                    return null;
-                }).filter(opt => opt !== null).join('');
-            
-            // Remove old event listeners by cloning
-            const newSelect = select.cloneNode(true);
-            select.parentNode.replaceChild(newSelect, select);
-            
-            newSelect.addEventListener('change', (e) => {
-                const matchId = parseInt(e.target.value);
-                if (matchId) {
-                    const match = matches.find(m => {
-                        const id = m.match_id || m.id || m.matchId || 0;
-                        return id == matchId;
-                    });
-                    if (match) {
-                        renderMatchStats(match);
-                    } else {
-                        const matchStatsDiv = document.getElementById('match-stats');
-                        if (matchStatsDiv) {
-                            matchStatsDiv.innerHTML = '<p class="muted">Матч не знайдено.</p>';
-                        }
-                    }
-                } else {
+                }
+
+                // Render matches select
+                const select = document.getElementById('match-select');
+                if (!select) {
+                    console.error('match-select element not found');
+                    return;
+                }
+
+                if (matches.length === 0) {
+                    select.innerHTML = '<option value="">Немає матчів</option>';
                     const matchStatsDiv = document.getElementById('match-stats');
                     if (matchStatsDiv) {
-                        matchStatsDiv.innerHTML = '<p class="muted">Оберіть матч для перегляду статистики</p>';
+                        matchStatsDiv.innerHTML = '<p class="muted">Немає матчів для відображення статистики.</p>';
                     }
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error loading stats:', error);
-        document.getElementById('top-players').innerHTML = '<p class="muted" style="color: red;">Помилка завантаження даних. Перевірте консоль браузера.</p>';
-        document.getElementById('match-stats').innerHTML = '<p class="muted" style="color: red;">Помилка завантаження даних.</p>';
-    }
-}
+                } else {
+                    select.innerHTML = '<option value="">-- Всі матчі --</option>' +
+                        matches.map(m => {
+                            const matchId = m.match_id || m.id || m.matchId || 0;
+                            const team1 = m.team1 || 'Невідома команда';
+                            const team2 = m.team2 || 'Невідома команда';
+                            // Only show if both teams have valid names
+                            if (team1 && team2 && team1 !== 'Невідома команда' && team2 !== 'Невідома команда') {
+                                return `<option value="${matchId}">${team1} vs ${team2}</option>`;
+                            }
+                            return null;
+                        }).filter(opt => opt !== null).join('');
 
-function renderMatchStats(match) {
-    const team1 = match.team1 || '';
-    const team2 = match.team2 || '';
-    // Check for invalid team names
-    if (!team1 || !team2 || 
-        team1.includes('Команда 1') || team1.includes('Команда 2') ||
-        team2.includes('Команда 1') || team2.includes('Команда 2') ||
-        team1.includes('Team 1') || team1.includes('Team 2') ||
-        team2.includes('Team 1') || team2.includes('Team 2')) {
-        document.getElementById('match-stats').innerHTML = '<p class="muted">Немає даних про команди або команди невалідні.</p>';
-        return;
-    }
-    
-    const statsHTML = `
+                    // Remove old event listeners by cloning
+                    const newSelect = select.cloneNode(true);
+                    select.parentNode.replaceChild(newSelect, select);
+
+                    newSelect.addEventListener('change', (e) => {
+                        const matchId = parseInt(e.target.value);
+                        if (matchId) {
+                            const match = matches.find(m => {
+                                const id = m.match_id || m.id || m.matchId || 0;
+                                return id == matchId;
+                            });
+                            if (match) {
+                                renderMatchStats(match);
+                            } else {
+                                const matchStatsDiv = document.getElementById('match-stats');
+                                if (matchStatsDiv) {
+                                    matchStatsDiv.innerHTML = '<p class="muted">Матч не знайдено.</p>';
+                                }
+                            }
+                        } else {
+                            const matchStatsDiv = document.getElementById('match-stats');
+                            if (matchStatsDiv) {
+                                matchStatsDiv.innerHTML = '<p class="muted">Оберіть матч для перегляду статистики</p>';
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('top-players').innerHTML = '<p class="muted" style="color: red;">Помилка завантаження даних. Перевірте консоль браузера.</p>';
+                document.getElementById('match-stats').innerHTML = '<p class="muted" style="color: red;">Помилка завантаження даних.</p>';
+            }
+        }
+
+        function renderMatchStats(match) {
+            const team1 = match.team1 || '';
+            const team2 = match.team2 || '';
+            // Check for invalid team names
+            if (!team1 || !team2 ||
+                team1.includes('Команда 1') || team1.includes('Команда 2') ||
+                team2.includes('Команда 1') || team2.includes('Команда 2') ||
+                team1.includes('Team 1') || team1.includes('Team 2') ||
+                team2.includes('Team 1') || team2.includes('Team 2')) {
+                document.getElementById('match-stats').innerHTML = '<p class="muted">Немає даних про команди або команди невалідні.</p>';
+                return;
+            }
+
+            const statsHTML = `
         <div class="match-stats-card">
             <h3>${team1} vs ${team2}</h3>
             <div class="stats-grid">
@@ -228,17 +233,17 @@ function renderMatchStats(match) {
             </div>
         </div>
     `;
-    const matchStatsDiv = document.getElementById('match-stats');
-    if (matchStatsDiv) {
-        matchStatsDiv.innerHTML = statsHTML;
-    }
-}
+            const matchStatsDiv = document.getElementById('match-stats');
+            if (matchStatsDiv) {
+                matchStatsDiv.innerHTML = statsHTML;
+            }
+        }
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Stats page loaded');
-    loadStats();
-});
-</script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Stats page loaded');
+            loadStats();
+        });
+    </script>
 </body>
-</html>
 
+</html>

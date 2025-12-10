@@ -1,5 +1,5 @@
 """Profile routes."""
-from flask import Blueprint, send_file, request, jsonify, session, g
+from flask import Blueprint, send_from_directory, request, jsonify, session, g
 import os
 import requests
 from utils.decorators import login_required
@@ -14,8 +14,7 @@ bp = Blueprint('profile', __name__)
 def profile():
     """User profile page - show voting history."""
     from flask import current_app
-    static_path = os.path.join(current_app.root_path, 'static', 'profile.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'profile.html')
 
 
 @bp.route("/api/profile/votes")
@@ -29,7 +28,7 @@ def get_user_votes():
 
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
-    
+
     db = get_db()
     try:
         # Get all votes by user from Flask DB
@@ -43,53 +42,63 @@ def get_user_votes():
             WHERE user_id = ?
             ORDER BY created_at DESC
         """, (user_id,)).fetchall()
-        
+
         # Fetch matches and players from Flask DB (fast, local - not from C++ API)
         matches_map = {}
         players_map = {}
         try:
             # Get matches from Flask cache
-            matches = db.execute("SELECT id, team1, team2, date FROM cached_matches").fetchall()
+            matches = db.execute(
+                "SELECT id, team1, team2, date FROM cached_matches").fetchall()
             for m in matches:
-                matches_map[m["id"]] = {"team1": m["team1"], "team2": m["team2"], "date": m["date"]}
-            
+                matches_map[m["id"]] = {
+                    "team1": m["team1"], "team2": m["team2"], "date": m["date"]}
+
             # Get players from Flask cache
-            players = db.execute("SELECT id, name, position FROM cached_players").fetchall()
+            players = db.execute(
+                "SELECT id, name, position FROM cached_players").fetchall()
             for p in players:
-                players_map[p["id"]] = {"name": p["name"], "position": p["position"]}
-            
+                players_map[p["id"]] = {
+                    "name": p["name"], "position": p["position"]}
+
             # If cache empty, fetch from C++ API and populate cache
             if not matches_map or not players_map:
                 import requests
                 from utils.api_client import API_BASE_URL
-                
+
                 try:
-                    resp = requests.get(f"{API_BASE_URL}/matches-page", timeout=2)
+                    resp = requests.get(
+                        f"{API_BASE_URL}/matches-page", timeout=2)
                     if resp.status_code == 200:
                         matches_data = resp.json().get("matches", [])
                         for m in matches_data:
                             mid = m.get("id")
-                            matches_map[mid] = {"team1": m.get("team1"), "team2": m.get("team2"), "date": m.get("date", "")}
+                            matches_map[mid] = {"team1": m.get("team1"), "team2": m.get(
+                                "team2"), "date": m.get("date", "")}
                             # Cache it
                             db.execute(
                                 "INSERT OR REPLACE INTO cached_matches (id, team1, team2, date) VALUES (?, ?, ?, ?)",
-                                (mid, m.get("team1"), m.get("team2"), m.get("date", ""))
+                                (mid, m.get("team1"), m.get(
+                                    "team2"), m.get("date", ""))
                             )
-                    
+
                     resp = requests.get(f"{API_BASE_URL}/players", timeout=2)
                     if resp.status_code == 200:
                         players_data = resp.json().get("players", [])
                         for p in players_data:
                             pid = p.get("id")
-                            players_map[pid] = {"name": p.get("name"), "position": p.get("position")}
+                            players_map[pid] = {"name": p.get(
+                                "name"), "position": p.get("position")}
                             # Cache it
                             db.execute(
                                 "INSERT OR REPLACE INTO cached_players (id, name, position, team_id) VALUES (?, ?, ?, ?)",
-                                (pid, p.get("name"), p.get("position"), p.get("team_id", 0))
+                                (pid, p.get("name"), p.get(
+                                    "position"), p.get("team_id", 0))
                             )
                     db.commit()
                 except Exception as api_err:
-                    current_app.logger.debug(f"Could not fetch from C++ API: {api_err}")
+                    current_app.logger.debug(
+                        f"Could not fetch from C++ API: {api_err}")
         except Exception as e:
             current_app.logger.debug(f"Error fetching matches/players: {e}")
 
@@ -107,11 +116,13 @@ def get_user_votes():
                     "date": match.get("date", "")
                 }
             else:
-                match_info = {"team1": "Команда 1", "team2": "Команда 2", "date": ""}
+                match_info = {"team1": "Команда 1",
+                              "team2": "Команда 2", "date": ""}
 
             player = players_map.get(player_id)
             if player:
-                player_info = {"name": player.get("name", "Невідомо"), "position": player.get("position", "-")}
+                player_info = {"name": player.get(
+                    "name", "Невідомо"), "position": player.get("position", "-")}
             else:
                 player_info = {"name": "Невідомо", "position": "-"}
 
@@ -136,4 +147,3 @@ def get_user_votes():
         from flask import current_app
         current_app.logger.error(f"Error getting user votes: {e}")
         return jsonify({"error": str(e)}), 500
-

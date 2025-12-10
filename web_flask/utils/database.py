@@ -72,10 +72,123 @@ def init_user_db() -> None:
             team2 TEXT NOT NULL,
             date TEXT,
             is_active BOOLEAN DEFAULT 1,
+            team1_goals INTEGER DEFAULT 0,
+            team2_goals INTEGER DEFAULT 0,
+            team1_possession INTEGER DEFAULT 50,
+            team2_possession INTEGER DEFAULT 50,
+            team1_shots INTEGER DEFAULT 0,
+            team2_shots INTEGER DEFAULT 0,
+            team1_shots_on_target INTEGER DEFAULT 0,
+            team2_shots_on_target INTEGER DEFAULT 0,
+            team1_corners INTEGER DEFAULT 0,
+            team2_corners INTEGER DEFAULT 0,
+            team1_fouls INTEGER DEFAULT 0,
+            team2_fouls INTEGER DEFAULT 0,
+            team1_yellow_cards INTEGER DEFAULT 0,
+            team2_yellow_cards INTEGER DEFAULT 0,
+            team1_red_cards INTEGER DEFAULT 0,
+            team2_red_cards INTEGER DEFAULT 0,
             synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+
+    # Add new columns if they don't exist (for existing databases)
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_goals INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_goals INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_possession INTEGER DEFAULT 50")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_possession INTEGER DEFAULT 50")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_shots INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_shots INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_shots_on_target INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_shots_on_target INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_corners INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_corners INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_fouls INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_fouls INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_yellow_cards INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_yellow_cards INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team1_red_cards INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute(
+            "ALTER TABLE cached_matches ADD COLUMN team2_red_cards INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     # Cache table for teams (synced from C++ API)
     conn.execute(
         """

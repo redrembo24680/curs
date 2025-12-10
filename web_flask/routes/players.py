@@ -1,5 +1,5 @@
 """Players routes."""
-from flask import Blueprint, send_file
+from flask import Blueprint, send_from_directory
 import os
 
 bp = Blueprint('players', __name__)
@@ -9,5 +9,4 @@ bp = Blueprint('players', __name__)
 def players():
     """Players page - serve static HTML."""
     from flask import current_app
-    static_path = os.path.join(current_app.root_path, 'static', 'players.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'players.html')

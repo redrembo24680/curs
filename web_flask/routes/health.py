@@ -1,5 +1,5 @@
-"""Health check routes."""
-from flask import Blueprint, send_file
+"""Health routes."""
+from flask import Blueprint, send_from_directory
 import os
 
 bp = Blueprint('health', __name__)
@@ -7,7 +7,6 @@ bp = Blueprint('health', __name__)
 
 @bp.route("/health")
 def health():
-    """Health check endpoint - serve static HTML."""
+    """Health check page - serve static HTML."""
     from flask import current_app
-    static_path = os.path.join(current_app.root_path, 'static', 'health.html')
-    return send_file(static_path, mimetype='text/html')
+    return send_from_directory(current_app.static_folder, 'health.html')

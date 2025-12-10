@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,76 +10,77 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
-<nav class="navbar">
-    <div class="logo">⚽ Голосування</div>
-    <ul class="nav-links">
-        <li><a href="/">Головна</a></li>
-        <li><a href="/players">Гравці</a></li>
-        <li><a href="/matches">Матчі</a></li>
-        <li><a href="/stats">Статистика</a></li>
-        <li><a href="/posts">Новини</a></li>
-        <li><a href="/profile">Профіль</a></li>
-        <li><a href="/health" class="active">Стан API</a></li>
-    </ul>
-    <div class="nav-meta">
-        <div class="stats-bar" id="stats-bar">
-            <span>👥 0 гравців</span>
-            <span>🏟️ 0 матчів</span>
-            <span>🗳️ 0 голосів</span>
-        </div>
-        <div class="auth-bar" id="auth-bar">
-            <a class="btn ghost" href="/login">Увійти</a>
-            <a class="btn primary small" href="/register">Реєстрація</a>
-        </div>
-    </div>
-</nav>
-
-<main>
-    <div id="flash-container"></div>
-
-    <section class="section">
-        <div class="card">
-            <h2>Стан API</h2>
-            <div id="api-status">
-                <p class="muted">Перевірка...</p>
+    <nav class="navbar">
+        <div class="logo">⚽ Голосування</div>
+        <ul class="nav-links">
+            <li><a href="/">Головна</a></li>
+            <li><a href="/players">Гравці</a></li>
+            <li><a href="/matches">Матчі</a></li>
+            <li><a href="/stats">Статистика</a></li>
+            <li><a href="/posts">Новини</a></li>
+            <li><a href="/profile">Профіль</a></li>
+            <li><a href="/health" class="active">Стан API</a></li>
+        </ul>
+        <div class="nav-meta">
+            <div class="stats-bar" id="stats-bar">
+                <span>👥 0 гравців</span>
+                <span>🏟️ 0 матчів</span>
+                <span>🗳️ 0 голосів</span>
+            </div>
+            <div class="auth-bar" id="auth-bar">
+                <a class="btn ghost" href="/login">Увійти</a>
+                <a class="btn primary small" href="/register">Реєстрація</a>
             </div>
         </div>
-    </section>
-</main>
+    </nav>
 
-<footer>
-    Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
-</footer>
+    <main>
+        <div id="flash-container"></div>
 
-<script src="/static/app.js"></script>
-<script>
-async function checkAPI() {
-    const response = await api.get('/', { message: 'API недоступне' });
-    const statusDiv = document.getElementById('api-status');
-    
-    if (response.message && response.message.includes('недоступне')) {
-        statusDiv.innerHTML = `
+        <section class="section">
+            <div class="card">
+                <h2>Стан API</h2>
+                <div id="api-status">
+                    <p class="muted">Перевірка...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Система голосування за гравців &middot; Backend: C++ · Frontend: Static HTML
+    </footer>
+
+    <script src="/static/app.js"></script>
+    <script>
+        async function checkAPI() {
+            const response = await api.get('/', { message: 'API недоступне' });
+            const statusDiv = document.getElementById('api-status');
+
+            if (response.message && response.message.includes('недоступне')) {
+                statusDiv.innerHTML = `
             <div style="padding: 1rem; background: #fee2e2; border-radius: 8px; color: #991b1b;">
                 <strong>❌ API недоступне</strong>
                 <p style="margin: 0.5rem 0 0 0;">Переконайтеся, що C++ backend сервер запущено на порту 8080.</p>
             </div>
         `;
-    } else {
-        statusDiv.innerHTML = `
+            } else {
+                statusDiv.innerHTML = `
             <div style="padding: 1rem; background: #d1fae5; border-radius: 8px; color: #065f46;">
                 <strong>✅ API працює</strong>
                 <pre style="margin: 0.5rem 0 0 0; background: white; padding: 1rem; border-radius: 4px; overflow-x: auto;">${JSON.stringify(response, null, 2)}</pre>
             </div>
         `;
-    }
-}
+            }
+        }
 
-document.addEventListener('DOMContentLoaded', () => {
-    checkAPI();
-    setInterval(checkAPI, 5000); // Check every 5 seconds
-});
-</script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAPI();
+            setInterval(checkAPI, 5000); // Check every 5 seconds
+        });
+    </script>
 </body>
-</html>
 
+</html>
