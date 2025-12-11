@@ -9,6 +9,10 @@ backend/
 web_flask/flask_session/
 web_flask/database.sqlite
 
+# Debug/test scripts
+check_*.py
+test_*.py
+
 # Python
 __pycache__/
 *.py[cod]
