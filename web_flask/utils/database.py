@@ -27,46 +27,47 @@ def close_db(_: Any) -> None:
 def init_user_db() -> None:
     """Initialize user database tables."""
     conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'fan'
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'fan'
+            )
+            """
         )
-        """
-    )
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS user_votes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            match_id INTEGER NOT NULL,
-            player_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, player_id),
-            FOREIGN KEY (user_id) REFERENCES users(id)
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_votes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                match_id INTEGER NOT NULL,
+                player_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, match_id),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+            """
         )
-        """
-    )
-    # Cache table for players (synced from C++ API)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS cached_players (
-            id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            position TEXT,
-            team_id INTEGER,
-            votes INTEGER DEFAULT 0,
-            synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        # Cache table for players (synced from C++ API)
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cached_players (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                position TEXT,
+                team_id INTEGER,
+                votes INTEGER DEFAULT 0,
+                synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
         )
-        """
-    )
-    # Cache table for matches (synced from C++ API)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS cached_matches (
+        # Cache table for matches (synced from C++ API)
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cached_matches (
             id INTEGER PRIMARY KEY,
             team1 TEXT NOT NULL,
             team2 TEXT NOT NULL,
@@ -91,147 +92,148 @@ def init_user_db() -> None:
             synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
-    )
-
-    # Add new columns if they don't exist (for existing databases)
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_goals INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_goals INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_possession INTEGER DEFAULT 50")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_possession INTEGER DEFAULT 50")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_shots INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_shots INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_shots_on_target INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_shots_on_target INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_corners INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_corners INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_fouls INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_fouls INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_yellow_cards INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_yellow_cards INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team1_red_cards INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        conn.execute(
-            "ALTER TABLE cached_matches ADD COLUMN team2_red_cards INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
-    # Cache table for teams (synced from C++ API)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS cached_teams (
-            id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """
-    )
-    # Comments table for matches
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS match_comments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            match_id INTEGER NOT NULL,
-            comment_text TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-        """
-    )
-    # Posts table for news/announcements
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-        """
-    )
-    conn.commit()
 
-    cursor = conn.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
-    if cursor.fetchone()[0] == 0:
+        # Add new columns if they don't exist (for existing databases)
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_goals INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_goals INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_possession INTEGER DEFAULT 50")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_possession INTEGER DEFAULT 50")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_shots INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_shots INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_shots_on_target INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_shots_on_target INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_corners INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_corners INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_fouls INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_fouls INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_yellow_cards INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_yellow_cards INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team1_red_cards INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute(
+                "ALTER TABLE cached_matches ADD COLUMN team2_red_cards INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        # Cache table for teams (synced from C++ API)
         conn.execute(
-            "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 'admin')",
-            ("admin", generate_password_hash("admin123")),
+            """
+            CREATE TABLE IF NOT EXISTS cached_teams (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        # Comments table for matches
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS match_comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                match_id INTEGER NOT NULL,
+                comment_text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+            """
+        )
+        # Posts table for news/announcements
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+            """
         )
         conn.commit()
-    conn.close()
+
+        cursor = conn.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
+        if cursor.fetchone()[0] == 0:
+            conn.execute(
+                "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 'admin')",
+                ("admin", generate_password_hash("admin123")),
+            )
+            conn.commit()
+    finally:
+        conn.close()

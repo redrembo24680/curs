@@ -1,6 +1,7 @@
 // Matches page functionality
 let currentMatchId = null;
-let userVotedPlayerIds = []; // Global list of players user voted for
+let userHasVoted = false;
+let votedPlayerId = null;
 
 // User login status (will be set by checkUserLoginStatus)
 window.userLoggedIn = false;
@@ -232,31 +233,10 @@ async function checkUserLoginStatus() {
         const userInfo = await response.json();
         window.userLoggedIn = userInfo.logged_in || false;
         window.currentUser = userInfo.logged_in ? userInfo : null;
-
-        // If user is logged in, load their global vote history (all players they voted for)
-        if (window.userLoggedIn) {
-            try {
-                const votesResponse = await fetch('/api/user-player-votes', {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-                if (votesResponse.ok) {
-                    const votesData = await votesResponse.json();
-                    userVotedPlayerIds = votesData.player_ids || [];
-                }
-            } catch (e) {
-                console.warn('Could not load user vote history:', e);
-            }
-        } else {
-            userVotedPlayerIds = [];
-        }
     } catch (error) {
         console.error('Error checking login status:', error);
         window.userLoggedIn = false;
         window.currentUser = null;
-        userVotedPlayerIds = [];
     }
 }
 
@@ -265,7 +245,6 @@ async function checkUserVoteStatus(matchId) {
     if (!window.userLoggedIn) {
         userHasVoted = false;
         votedPlayerId = null;
-        userVotedPlayerIds = [];
         return;
     }
 
@@ -289,13 +268,6 @@ async function checkUserVoteStatus(matchId) {
 
             const status = await response.json();
             userHasVoted = status.has_voted || false;
-
-            // Update list of players user voted for
-            if (status.player_ids && Array.isArray(status.player_ids)) {
-                userVotedPlayerIds = status.player_ids;
-            } else {
-                userVotedPlayerIds = [];
-            }
 
             if (status.has_voted && status.player_id) {
                 votedPlayerId = status.player_id;
@@ -381,16 +353,16 @@ async function loadMatchData(matchId) {
     const match = pageData.matches.find(m => m.id === matchId);
     if (!match) return;
 
-    // Get votes from Flask DB (fast, local - not from C++ API)
-    const votesData = await fetch(`/api/match-votes/${matchId}`).then(r => r.json()).catch(() => ({ votes: [] }));
-    const votesMap = {};
-    (votesData.votes || []).forEach(v => {
-        votesMap[v.player_id] = v.votes;
-    });
-
     // Get players
     const playersData = await api.get('/players', { players: [] });
     const allPlayers = playersData.players || [];
+    
+    // Get votes for THIS SPECIFIC MATCH from C++ API
+    const votesData = await fetch(`/api/match-votes-cpp/${matchId}`).then(r => r.json()).catch(() => ({ votes: [] }));
+    const votesMap = {};
+    (votesData.votes || []).forEach(v => {
+        votesMap[v.player_id] = v.votes || 0;
+    });
 
     // Build rosters
     const homeTeam = pageData.teams.find(t => t.name === match.team1);
@@ -795,9 +767,9 @@ function openPlayerModal(player, teamName, side) {
         return;
     }
 
-    // Check if user already voted for THIS SPECIFIC PLAYER
-    if (userVotedPlayerIds && userVotedPlayerIds.includes(player.id)) {
-        showFlash('Ви вже проголосували за цього гравця', 'warning');
+    // Check if user already voted in THIS MATCH (not globally for this player)
+    if (userHasVoted) {
+        showFlash('Ви вже проголосували в цьому матчі', 'warning');
         return;
     }
 
@@ -856,11 +828,6 @@ async function submitVote(event, playerId) {
         if (response.ok && result.status === 'success') {
             showFlash('✓ Голос успішно зараховано!', 'success');
             document.getElementById('playerModal').style.display = 'none';
-
-            // Add player to voted list
-            if (!userVotedPlayerIds.includes(playerId)) {
-                userVotedPlayerIds.push(playerId);
-            }
 
             userHasVoted = true;
             votedPlayerId = playerId;

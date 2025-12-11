@@ -31,6 +31,26 @@ def vote():
     if not match_id or not player_id:
         return jsonify({"status": "error", "message": "match_id та player_id є обов'язковими"}), 400
 
+    # Check if user already voted in this match
+    db = get_db()
+    try:
+        existing_vote = db.execute(
+            "SELECT player_id FROM user_votes WHERE user_id = ? AND match_id = ?",
+            (user_id, match_id)
+        ).fetchone()
+        
+        if existing_vote:
+            return jsonify({
+                "status": "error",
+                "message": "Ви вже проголосували в цьому матчі",
+                "has_voted": True,
+                "player_id": existing_vote["player_id"]
+            }), 400
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error checking vote status: {e}")
+        # Continue if check fails
+
     # Check if match is active before allowing vote
     from utils.api_client import _get
     try:
@@ -58,26 +78,34 @@ def vote():
 
     # 1. First, send vote to C++ backend (main source of truth)
     try:
-        vote_response = _post("/vote", {"match_id": match_id, "player_id": player_id})
+        success, vote_response = _post("/vote", {"match_id": match_id, "player_id": player_id})
         
-        if vote_response and vote_response.get("status") == "success":
+        from flask import current_app
+        current_app.logger.info(f"C++ response: success={success}, vote_response={vote_response}")
+        
+        if success and vote_response.get("status") == "success":
             # Vote accepted by C++ backend, now save to Flask DB for tracking
             db = get_db()
             try:
-                from utils.database import init_user_db
-                init_user_db()
-                
                 db.execute(
                     "INSERT INTO user_votes (user_id, match_id, player_id) VALUES (?, ?, ?)",
                     (user_id, match_id, player_id)
                 )
                 db.commit()
                 
+                # Verify the insert worked
+                verify = db.execute(
+                    "SELECT COUNT(*) as count FROM user_votes WHERE user_id = ? AND match_id = ?",
+                    (user_id, match_id)
+                ).fetchone()
+                
                 from flask import current_app
                 current_app.logger.info(
-                    f"Vote synced: user_id={user_id}, match_id={match_id}, player_id={player_id}")
-            except sqlite3.IntegrityError:
+                    f"Vote synced: user_id={user_id}, match_id={match_id}, player_id={player_id}, verify_count={verify['count']}")
+            except sqlite3.IntegrityError as ie:
                 # Already voted locally, but C++ backend accepted it
+                from flask import current_app
+                current_app.logger.warning(f"IntegrityError on INSERT: {ie} - user_id={user_id}, match_id={match_id}")
                 db.rollback()
             except Exception as e:
                 from flask import current_app
@@ -96,9 +124,6 @@ def vote():
         # Fallback: save locally only if backend is unavailable
         db = get_db()
         try:
-            from utils.database import init_user_db
-            init_user_db()
-            
             db.execute(
                 "INSERT INTO user_votes (user_id, match_id, player_id) VALUES (?, ?, ?)",
                 (user_id, match_id, player_id)
@@ -276,6 +301,23 @@ def matches_info():
         current_app.logger.debug(f"Error getting matches info: {e}")
 
     return jsonify({"matches": []}), 500
+
+
+@bp.route("/api/match-votes-cpp/<int:match_id>")
+def match_votes_cpp(match_id):
+    """Get vote counts for all players in a match from C++ backend."""
+    try:
+        from utils.api_client import _get
+        # Get votes for specific match from C++ API
+        votes_data = _get(f"/api/votes/{match_id}")
+        if votes_data:
+            return jsonify(votes_data)
+        else:
+            return jsonify({"match_id": match_id, "votes": []})
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error getting match votes from C++ backend: {e}")
+        return jsonify({"match_id": match_id, "votes": []}), 500
 
 
 @bp.route("/api/flask-stats")

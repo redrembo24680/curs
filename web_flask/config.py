@@ -5,7 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
-DB_PATH = BASE_DIR / "database.sqlite"
+DB_PATH = DATA_DIR / "database.sqlite"
 SESSION_DIR = BASE_DIR / "flask_session"
 SESSION_DIR.mkdir(exist_ok=True)
 
