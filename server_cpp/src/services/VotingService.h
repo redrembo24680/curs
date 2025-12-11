@@ -30,6 +30,7 @@ public:
     Stats collectStats() const;
     std::vector<MatchStats> collectMatchStats() const;
     bool closeMatch(int matchId, std::string& errorMessage);
+    bool setMatchActive(int matchId, bool isActive, std::string& errorMessage);
     bool updateMatchStats(int matchId, const MatchStats& stats, std::string& errorMessage);
     MatchStats getMatchStats(int matchId) const;
 

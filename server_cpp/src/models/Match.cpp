@@ -25,6 +25,8 @@ const std::string& Match::getTeam2Formation() const { return m_team2Formation; }
 
 void Match::close() { m_isActive = false; }
 
+void Match::activate() { m_isActive = true; }
+
 
 
 

@@ -253,6 +253,34 @@ std::string ApiController::handleCloseMatch(const std::map<std::string, std::str
     return R"({"status":"success","message":"Матч завершено"})";
 }
 
+std::string ApiController::handleSetMatchActive(const std::map<std::string, std::string>& body) const {
+    const auto matchIt = body.find("match_id");
+    const auto activeIt = body.find("is_active");
+    
+    if (matchIt == body.end()) {
+        return R"({"status":"error","message":"match_id є обов'язковим"})";
+    }
+    if (activeIt == body.end()) {
+        return R"({"status":"error","message":"is_active є обов'язковим"})";
+    }
+
+    int matchId = std::stoi(matchIt->second);
+    bool isActive = (activeIt->second == "1" || activeIt->second == "true");
+    
+    std::string error;
+    if (!m_service.setMatchActive(matchId, isActive, error)) {
+        std::ostringstream json;
+        json << "{"
+             << "\"status\":\"error\","
+             << "\"message\":\"" << escape(error) << "\""
+             << "}";
+        return json.str();
+    }
+
+    return isActive ? R"({"status":"success","message":"Матч активовано"})" 
+                    : R"({"status":"success","message":"Матч закрито"})";
+}
+
 std::string ApiController::handleUpdateMatchStats(const std::map<std::string, std::string>& body) const {
     const auto matchIt = body.find("match_id");
     if (matchIt == body.end()) {

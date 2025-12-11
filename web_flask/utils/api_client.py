@@ -103,17 +103,38 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
 
 def _post(endpoint: str, payload: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
     """Make a POST request to the API (no retry - backend is slow)."""
+    # Ensure endpoint starts with /
     if not endpoint.startswith("/"):
         endpoint = "/" + endpoint
+    
+    # Remove /api prefix if present (API_BASE_URL already contains it)
+    if endpoint.startswith("/api/"):
+        endpoint = endpoint[4:]  # Remove "/api" prefix, keep the slash
+    elif endpoint.startswith("/api"):
+        endpoint = endpoint[4:]  # Remove "/api" prefix
+        if not endpoint.startswith("/"):
+            endpoint = "/" + endpoint
 
     try:
+        full_url = f"{API_BASE_URL}{endpoint}"
+        try:
+            from flask import current_app
+            current_app.logger.info(f"API POST request: {full_url}")
+        except:
+            pass
         response = requests.post(
-            f"{API_BASE_URL}{endpoint}",
+            full_url,
             json=payload,
             timeout=REQUEST_TIMEOUT_POST  # Use longer timeout for POST
         )
         response.raise_for_status()
-        return True, response.json()
+        data = response.json()
+        try:
+            from flask import current_app
+            current_app.logger.info(f"API POST response: {data}")
+        except:
+            pass
+        return True, data
     except requests.ConnectionError as exc:
         error_msg = f"Backend server is not available at {API_BASE_URL}"
         try:

@@ -247,6 +247,10 @@ void VotingService::persistUnlocked() {
 }
 
 bool VotingService::closeMatch(int matchId, std::string& errorMessage) {
+    return setMatchActive(matchId, false, errorMessage);
+}
+
+bool VotingService::setMatchActive(int matchId, bool isActive, std::string& errorMessage) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto matchIter = std::find_if(m_matches.begin(), m_matches.end(), 
         [matchId](const Match& m) { return m.getId() == matchId; });
@@ -256,12 +260,13 @@ bool VotingService::closeMatch(int matchId, std::string& errorMessage) {
         return false;
     }
     
-    if (!matchIter->isActive()) {
-        errorMessage = "Матч вже завершено";
-        return false;
+    // Toggle or set the status
+    if (isActive) {
+        const_cast<Match&>(*matchIter).activate();
+    } else {
+        const_cast<Match&>(*matchIter).close();
     }
     
-    const_cast<Match&>(*matchIter).close();
     persistUnlocked();
     return true;
 }

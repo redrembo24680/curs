@@ -31,6 +31,31 @@ def vote():
     if not match_id or not player_id:
         return jsonify({"status": "error", "message": "match_id та player_id є обов'язковими"}), 400
 
+    # Check if match is active before allowing vote
+    from utils.api_client import _get
+    try:
+        matches_data = _get("/api/match-stats")
+        if matches_data and "matches" in matches_data:
+            # Find the specific match
+            current_match = None
+            for match in matches_data["matches"]:
+                if match.get("match_id") == int(match_id):
+                    current_match = match
+                    break
+            
+            if current_match:
+                if not current_match.get("is_active", True):
+                    return jsonify({
+                        "status": "error", 
+                        "message": "Цей матч закрито, голосування недоступне"
+                    }), 403
+            else:
+                return jsonify({"status": "error", "message": "Матч не знайдено"}), 404
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.warning(f"Could not check match status: {e}")
+        # Continue anyway if we can't check (backend might be temporarily unavailable)
+
     # 1. First, send vote to C++ backend (main source of truth)
     try:
         vote_response = _post("/vote", {"match_id": match_id, "player_id": player_id})

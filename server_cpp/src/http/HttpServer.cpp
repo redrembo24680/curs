@@ -238,6 +238,9 @@ std::string HttpServer::handleRequest(const std::string& request) {
             if (path == "/api/matches/close") {
                 return respond(m_controller.handleCloseMatch(body));
             }
+            if (path == "/api/matches/set-active") {
+                return respond(m_controller.handleSetMatchActive(body));
+            }
             if (path == "/api/matches/update-stats") {
                 return respond(m_controller.handleUpdateMatchStats(body));
             }

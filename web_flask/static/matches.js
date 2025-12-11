@@ -720,18 +720,18 @@ function renderPitch(homeRoster, awayRoster, match) {
     existingPlayers.forEach(p => p.remove());
 
     homeRoster.forEach(player => {
-        const btn = createPlayerButton(player, 'home', match.team1);
+        const btn = createPlayerButton(player, 'home', match.team1, match.isActive);
         pitch.appendChild(btn);
     });
 
     awayRoster.forEach(player => {
-        const btn = createPlayerButton(player, 'away', match.team2);
+        const btn = createPlayerButton(player, 'away', match.team2, match.isActive);
         pitch.appendChild(btn);
     });
 }
 
 // Create player button
-function createPlayerButton(player, side, teamName) {
+function createPlayerButton(player, side, teamName, matchIsActive = true) {
     const btn = document.createElement('button');
     btn.className = `player-dot ${side}`;
     btn.style.top = `${player.y}%`;
@@ -747,8 +747,18 @@ function createPlayerButton(player, side, teamName) {
         </div>
     `;
 
+    // Check if match is closed
+    if (!matchIsActive) {
+        btn.disabled = true;
+        btn.style.cursor = 'not-allowed';
+        btn.style.opacity = '0.5';
+        btn.title = 'Матч закрито, голосування недоступне';
+        btn.onclick = () => {
+            showFlash('Цей матч закрито, голосування недоступне', 'warning');
+        };
+    }
     // Only allow clicking if user is logged in and hasn't voted
-    if (window.userLoggedIn && !userHasVoted) {
+    else if (window.userLoggedIn && !userHasVoted) {
         btn.onclick = () => openPlayerModal(player, teamName, side);
         btn.style.cursor = 'pointer';
         btn.title = `${player.name} (${player.position}) - ${player.votes} голосів`;

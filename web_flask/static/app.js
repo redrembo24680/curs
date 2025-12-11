@@ -40,6 +40,52 @@ class APIClient {
 
 const api = new APIClient();
 
+// Check if user is admin and add admin link to navigation
+async function checkAdminAccess() {
+    try {
+        const response = await fetch('/api/user-info');
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.logged_in && data.role === 'admin') {
+                addAdminLinkToNav();
+            }
+        }
+    } catch (error) {
+        console.log('Not logged in or error checking admin access');
+    }
+}
+
+function addAdminLinkToNav() {
+    const navLinks = document.querySelector('.nav-links');
+    if (!navLinks) return;
+    
+    // Check if admin link already exists
+    if (document.querySelector('.nav-links a[href="/admin"]')) return;
+    
+    // Create admin link
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '/admin';
+    a.textContent = '⚙️ Адмін';
+    a.className = window.location.pathname === '/admin' ? 'active' : '';
+    li.appendChild(a);
+    
+    // Insert before Profile link
+    const profileLink = navLinks.querySelector('a[href="/profile"]');
+    if (profileLink) {
+        navLinks.insertBefore(li, profileLink.parentElement);
+    } else {
+        navLinks.appendChild(li);
+    }
+}
+
+// Call on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAdminAccess);
+} else {
+    checkAdminAccess();
+}
+
 // Utility functions
 function formatDate(dateString) {
     if (!dateString) return '';

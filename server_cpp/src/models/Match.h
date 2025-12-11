@@ -16,6 +16,7 @@ public:
     const std::string& getTeam2Formation() const;
 
     void close();
+    void activate();
 
 private:
     int m_id{0};
