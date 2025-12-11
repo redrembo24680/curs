@@ -5,7 +5,7 @@ import os
 
 def clear_flask_votes():
     """Clear votes from Flask database."""
-    flask_db = os.path.join('web_flask', 'database.sqlite')
+    flask_db = os.path.join('web_flask', 'data', 'database.sqlite')
     if not os.path.exists(flask_db):
         print(f"Flask database not found: {flask_db}")
         return
