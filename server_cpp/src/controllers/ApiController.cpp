@@ -352,6 +352,26 @@ std::string ApiController::handleUpdateMatchStats(const std::map<std::string, st
     return R"({"status":"success","message":"Статистику оновлено"})";
 }
 
+std::string ApiController::handleDeleteMatch(const std::map<std::string, std::string>& body) const {
+    const auto matchIt = body.find("match_id");
+    if (matchIt == body.end()) {
+        return R"({"status":"error","message":"match_id є обов'язковим"})";
+    }
+
+    int matchId = std::stoi(matchIt->second);
+    std::string error;
+    if (!m_service.deleteMatch(matchId, error)) {
+        std::ostringstream json;
+        json << "{"
+             << "\"status\":\"error\","
+             << "\"message\":\"" << escape(error) << "\""
+             << "}";
+        return json.str();
+    }
+
+    return R"({"status":"success","message":"Матч видалено"})";
+}
+
 std::string ApiController::handleGetMatchStats(int matchId) const {
     MatchStats stats = m_service.getMatchStats(matchId);
     std::ostringstream json;

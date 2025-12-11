@@ -277,6 +277,7 @@
                         ? `<button class="btn btn-danger" onclick="closeMatch(${match.match_id})">Закрити матч</button>`
                         : `<button class="btn btn-success" onclick="activateMatch(${match.match_id})">Активувати матч</button>`
                     }
+                    <button class="btn btn-danger" onclick="deleteMatch(${match.match_id})" style="background: #c62828;">Видалити матч</button>
                 </div>
             `;
             return card;
@@ -354,6 +355,30 @@
             } catch (error) {
                 console.error('Error activating match:', error);
                 showAlert('Помилка активації матчу', 'error');
+            }
+        }
+
+        async function deleteMatch(matchId) {
+            if (!confirm('Ви впевнені, що хочете видалити цей матч? Ця дія незворотна!')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/match/${matchId}/delete`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    showAlert('Матч успішно видалено!', 'success');
+                    await loadMatches();
+                } else {
+                    showAlert(result.message || 'Помилка видалення матчу', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting match:', error);
+                showAlert('Помилка видалення матчу', 'error');
             }
         }
 

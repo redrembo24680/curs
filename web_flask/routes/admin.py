@@ -53,6 +53,23 @@ def activate_match(match_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@bp.route("/api/admin/match/<int:match_id>/delete", methods=["POST"])
+@admin_required
+def delete_match(match_id):
+    """Delete a match."""
+    try:
+        success, result = _post("/api/matches/delete", {"match_id": str(match_id)})
+        if success and result.get("status") == "success":
+            return jsonify({"status": "success", "message": "Матч видалено"})
+        else:
+            error_msg = result.get("message", "Unknown error")
+            return jsonify({"status": "error", "message": error_msg}), 500
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error deleting match: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @bp.route("/api/admin/match/<int:match_id>/update-stats", methods=["POST"])
 @admin_required
 def update_match_stats(match_id):

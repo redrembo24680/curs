@@ -244,6 +244,9 @@ std::string HttpServer::handleRequest(const std::string& request) {
             if (path == "/api/matches/update-stats") {
                 return respond(m_controller.handleUpdateMatchStats(body));
             }
+            if (path == "/api/matches/delete") {
+                return respond(m_controller.handleDeleteMatch(body));
+            }
         }
 
         return respond(R"({"error":"Route not found"})");

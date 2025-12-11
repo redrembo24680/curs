@@ -298,6 +298,29 @@ bool VotingService::updateMatchStats(int matchId, const MatchStats& stats, std::
     return true;
 }
 
+bool VotingService::deleteMatch(int matchId, std::string& errorMessage) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto matchIter = std::find_if(m_matches.begin(), m_matches.end(), 
+        [matchId](const Match& m) { return m.getId() == matchId; });
+    
+    if (matchIter == m_matches.end()) {
+        errorMessage = "Матч не знайдено";
+        return false;
+    }
+    
+    // Remove match from vector
+    m_matches.erase(matchIter);
+    
+    // Remove associated votes
+    m_votes.erase(matchId);
+    
+    // Remove match stats
+    m_matchStats.erase(matchId);
+    
+    persistUnlocked();
+    return true;
+}
+
 MatchStats VotingService::getMatchStats(int matchId) const {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_matchStats.count(matchId) > 0) {

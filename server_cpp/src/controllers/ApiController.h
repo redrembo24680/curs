@@ -29,6 +29,7 @@ public:
     std::string handleCloseMatch(const std::map<std::string, std::string>& body) const;
     std::string handleSetMatchActive(const std::map<std::string, std::string>& body) const;
     std::string handleUpdateMatchStats(const std::map<std::string, std::string>& body) const;
+    std::string handleDeleteMatch(const std::map<std::string, std::string>& body) const;
     std::string handleGetMatchStats(int matchId) const;
 
 private:
