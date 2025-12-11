@@ -23,7 +23,8 @@ def admin_required(f):
 def close_match(match_id):
     """Close a match (make it inactive)."""
     try:
-        success, result = _post("/api/matches/close", {"match_id": str(match_id)})
+        success, result = _post("/api/matches/close",
+                                {"match_id": str(match_id)})
         if success and result.get("status") == "success":
             return jsonify({"status": "success", "message": "Матч закрито"})
         else:
@@ -41,7 +42,8 @@ def activate_match(match_id):
     """Activate a match."""
     try:
         # Use set-active endpoint with is_active=1
-        success, result = _post("/api/matches/set-active", {"match_id": str(match_id), "is_active": "1"})
+        success, result = _post("/api/matches/set-active",
+                                {"match_id": str(match_id), "is_active": "1"})
         if success and result.get("status") == "success":
             return jsonify({"status": "success", "message": "Матч активовано"})
         else:
@@ -58,7 +60,8 @@ def activate_match(match_id):
 def delete_match(match_id):
     """Delete a match."""
     try:
-        success, result = _post("/api/matches/delete", {"match_id": str(match_id)})
+        success, result = _post("/api/matches/delete",
+                                {"match_id": str(match_id)})
         if success and result.get("status") == "success":
             return jsonify({"status": "success", "message": "Матч видалено"})
         else:
@@ -78,16 +81,16 @@ def update_match_stats(match_id):
         data = request.get_json()
         if not data:
             return jsonify({"status": "error", "message": "No data provided"}), 400
-        
+
         # Add match_id to data and convert all to strings
         data["match_id"] = str(match_id)
         # Convert all values to strings for API
         for key in data:
             data[key] = str(data[key])
-        
+
         # Send to C++ backend
         success, result = _post("/api/matches/update-stats", data)
-        
+
         if success and result.get("status") == "success":
             return jsonify({"status": "success", "message": "Статистику оновлено"})
         else:
@@ -95,7 +98,8 @@ def update_match_stats(match_id):
             return jsonify({"status": "error", "message": error_msg}), 500
     except Exception as e:
         from flask import current_app
-        current_app.logger.error(f"Error updating match stats: {e}", exc_info=True)
+        current_app.logger.error(
+            f"Error updating match stats: {e}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -121,7 +125,6 @@ def admin_page():
     # Check if user is admin
     if not session.get('user_id') or session.get('role') != 'admin':
         return redirect(url_for('auth.login'))
-    
+
     from flask import current_app, send_from_directory
     return send_from_directory(current_app.static_folder, 'admin.html')
-

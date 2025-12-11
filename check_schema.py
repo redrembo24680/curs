@@ -6,7 +6,8 @@ conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
 # Get table schema
-cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='user_votes'")
+cursor.execute(
+    "SELECT sql FROM sqlite_master WHERE type='table' AND name='user_votes'")
 schema = cursor.fetchone()
 
 if schema:

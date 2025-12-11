@@ -11,12 +11,12 @@ try:
     )
     conn.commit()
     print("INSERT successful!")
-    
+
     # Check what we inserted
     cursor.execute("SELECT * FROM user_votes WHERE user_id=1 AND match_id=1")
     result = cursor.fetchone()
     print(f"Record: {result}")
-    
+
 except sqlite3.IntegrityError as e:
     print(f"IntegrityError: {e}")
     conn.rollback()

@@ -28,7 +28,8 @@ def _get(endpoint: str, default: Dict[str, Any] | List[Any] | None = None) -> An
     # We need to remove /api from endpoint: /api/stats -> /stats
     # Then: http://cpp_backend:8080/api + /stats = http://cpp_backend:8080/api/stats (CORRECT)
     if endpoint.startswith("/api/"):
-        endpoint = endpoint[4:]  # Remove "/api" prefix, keep the slash: "/api/stats" -> "/stats"
+        # Remove "/api" prefix, keep the slash: "/api/stats" -> "/stats"
+        endpoint = endpoint[4:]
     elif endpoint.startswith("/api"):
         endpoint = endpoint[4:]  # Remove "/api" prefix: "/api" -> ""
         if not endpoint.startswith("/"):
@@ -106,7 +107,7 @@ def _post(endpoint: str, payload: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]
     # Ensure endpoint starts with /
     if not endpoint.startswith("/"):
         endpoint = "/" + endpoint
-    
+
     # Remove /api prefix if present (API_BASE_URL already contains it)
     if endpoint.startswith("/api/"):
         endpoint = endpoint[4:]  # Remove "/api" prefix, keep the slash

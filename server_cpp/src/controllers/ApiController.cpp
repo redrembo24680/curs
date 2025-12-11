@@ -5,23 +5,27 @@
 #include <sstream>
 #include "models/MatchStats.h"
 
-ApiController::ApiController(VotingService& service) : m_service(service) {}
+ApiController::ApiController(VotingService &service) : m_service(service) {}
 
-std::string ApiController::handleRoot() const {
+std::string ApiController::handleRoot() const
+{
     return R"({"message":"Voting System API","version":"2.0","status":"ok"})";
 }
 
-std::string ApiController::handleTeamsGet() const {
+std::string ApiController::handleTeamsGet() const
+{
     auto teams = m_service.listTeams();
     std::ostringstream json;
     json << "{\"teams\":[";
-    for (std::size_t i = 0; i < teams.size(); ++i) {
-        const auto& t = teams[i];
+    for (std::size_t i = 0; i < teams.size(); ++i)
+    {
+        const auto &t = teams[i];
         json << "{"
              << "\"id\":" << t.getId() << ","
              << "\"name\":\"" << escape(t.getName()) << "\""
              << "}";
-        if (i + 1 < teams.size()) {
+        if (i + 1 < teams.size())
+        {
             json << ",";
         }
     }
@@ -29,12 +33,14 @@ std::string ApiController::handleTeamsGet() const {
     return json.str();
 }
 
-std::string ApiController::handlePlayersGet() const {
+std::string ApiController::handlePlayersGet() const
+{
     auto players = m_service.listPlayers();
     std::ostringstream json;
     json << "{\"players\":[";
-    for (std::size_t i = 0; i < players.size(); ++i) {
-        const auto& p = players[i];
+    for (std::size_t i = 0; i < players.size(); ++i)
+    {
+        const auto &p = players[i];
         json << "{"
              << "\"id\":" << p.getId() << ","
              << "\"name\":\"" << escape(p.getName()) << "\","
@@ -42,7 +48,8 @@ std::string ApiController::handlePlayersGet() const {
              << "\"team_id\":" << p.getTeamId() << ","
              << "\"votes\":" << p.getVotes()
              << "}";
-        if (i + 1 < players.size()) {
+        if (i + 1 < players.size())
+        {
             json << ",";
         }
     }
@@ -50,12 +57,14 @@ std::string ApiController::handlePlayersGet() const {
     return json.str();
 }
 
-std::string ApiController::handleMatchesGet() const {
+std::string ApiController::handleMatchesGet() const
+{
     auto matches = m_service.listMatches();
     std::ostringstream json;
     json << "{\"matches\":[";
-    for (std::size_t i = 0; i < matches.size(); ++i) {
-        const auto& m = matches[i];
+    for (std::size_t i = 0; i < matches.size(); ++i)
+    {
+        const auto &m = matches[i];
         json << "{"
              << "\"id\":" << m.getId() << ","
              << "\"team1\":\"" << escape(m.getTeam1()) << "\","
@@ -65,7 +74,8 @@ std::string ApiController::handleMatchesGet() const {
              << "\"team1_formation\":\"" << escape(m.getTeam1Formation()) << "\","
              << "\"team2_formation\":\"" << escape(m.getTeam2Formation()) << "\""
              << "}";
-        if (i + 1 < matches.size()) {
+        if (i + 1 < matches.size())
+        {
             json << ",";
         }
     }
@@ -73,7 +83,8 @@ std::string ApiController::handleMatchesGet() const {
     return json.str();
 }
 
-std::string ApiController::handleStatsGet() const {
+std::string ApiController::handleStatsGet() const
+{
     const auto stats = m_service.collectStats();
     std::ostringstream json;
     json << "{"
@@ -84,12 +95,14 @@ std::string ApiController::handleStatsGet() const {
     return json.str();
 }
 
-std::string ApiController::handleMatchStatsGet() const {
+std::string ApiController::handleMatchStatsGet() const
+{
     const auto matchStats = m_service.collectMatchStats();
     std::ostringstream json;
     json << "{\"matches\":[";
-    for (std::size_t i = 0; i < matchStats.size(); ++i) {
-        const auto& ms = matchStats[i];
+    for (std::size_t i = 0; i < matchStats.size(); ++i)
+    {
+        const auto &ms = matchStats[i];
         json << "{"
              << "\"match_id\":" << ms.matchId << ","
              << "\"team1\":\"" << escape(ms.team1) << "\","
@@ -119,7 +132,8 @@ std::string ApiController::handleMatchStatsGet() const {
              << "\"team1_goals\":" << ms.team1Goals << ","
              << "\"team2_goals\":" << ms.team2Goals;
         json << "}";
-        if (i + 1 < matchStats.size()) {
+        if (i + 1 < matchStats.size())
+        {
             json << ",";
         }
     }
@@ -127,13 +141,16 @@ std::string ApiController::handleMatchStatsGet() const {
     return json.str();
 }
 
-std::string ApiController::handleVotesGet(int matchId) const {
+std::string ApiController::handleVotesGet(int matchId) const
+{
     auto votes = m_service.votesForMatch(matchId);
     std::ostringstream json;
     json << "{\"match_id\":" << matchId << ",\"votes\":[";
     bool first = true;
-    for (const auto& [playerId, count] : votes) {
-        if (!first) {
+    for (const auto &[playerId, count] : votes)
+    {
+        if (!first)
+        {
             json << ",";
         }
         json << "{"
@@ -146,9 +163,11 @@ std::string ApiController::handleVotesGet(int matchId) const {
     return json.str();
 }
 
-std::string ApiController::handleAddTeam(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleAddTeam(const std::map<std::string, std::string> &body) const
+{
     const auto nameIt = body.find("name");
-    if (nameIt == body.end() || nameIt->second.empty()) {
+    if (nameIt == body.end() || nameIt->second.empty())
+    {
         return R"({"status":"error","message":"Необхідно вказати назву команди"})";
     }
     const auto team = m_service.addTeam(nameIt->second);
@@ -160,20 +179,27 @@ std::string ApiController::handleAddTeam(const std::map<std::string, std::string
     return json.str();
 }
 
-std::string ApiController::handleAddPlayer(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleAddPlayer(const std::map<std::string, std::string> &body) const
+{
     const auto nameIt = body.find("name");
     const auto positionIt = body.find("position");
     const auto teamIdIt = body.find("team_id");
-    
-    if (nameIt == body.end() || positionIt == body.end() || nameIt->second.empty()) {
+
+    if (nameIt == body.end() || positionIt == body.end() || nameIt->second.empty())
+    {
         return R"({"status":"error","message":"Необхідно вказати ім'я та позицію гравця"})";
     }
-    
+
     int teamId = 0;
-    if (teamIdIt != body.end()) {
-        try {
+    if (teamIdIt != body.end())
+    {
+        try
+        {
             teamId = std::stoi(teamIdIt->second);
-        } catch (...) {}
+        }
+        catch (...)
+        {
+        }
     }
 
     const auto player = m_service.addPlayer(nameIt->second, positionIt->second, teamId);
@@ -185,18 +211,20 @@ std::string ApiController::handleAddPlayer(const std::map<std::string, std::stri
     return json.str();
 }
 
-std::string ApiController::handleAddMatch(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleAddMatch(const std::map<std::string, std::string> &body) const
+{
     const auto first = body.find("team1");
     const auto second = body.find("team2");
-    if (first == body.end() || second == body.end() || first->second.empty() || second->second.empty()) {
+    if (first == body.end() || second == body.end() || first->second.empty() || second->second.empty())
+    {
         return R"({"status":"error","message":"Необхідно вказати обидві команди"})";
     }
-    
+
     const auto team1FormationIt = body.find("team1_formation");
     const auto team2FormationIt = body.find("team2_formation");
     const std::string team1Formation = (team1FormationIt != body.end() && !team1FormationIt->second.empty()) ? team1FormationIt->second : "4-3-3";
     const std::string team2Formation = (team2FormationIt != body.end() && !team2FormationIt->second.empty()) ? team2FormationIt->second : "4-3-3";
-    
+
     const auto match = m_service.addMatch(first->second, second->second, team1Formation, team2Formation);
     std::ostringstream json;
     json << "{"
@@ -206,10 +234,12 @@ std::string ApiController::handleAddMatch(const std::map<std::string, std::strin
     return json.str();
 }
 
-std::string ApiController::handleVote(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleVote(const std::map<std::string, std::string> &body) const
+{
     const auto matchIt = body.find("match_id");
     const auto playerIt = body.find("player_id");
-    if (matchIt == body.end() || playerIt == body.end()) {
+    if (matchIt == body.end() || playerIt == body.end())
+    {
         return R"({"status":"error","message":"match_id та player_id є обов'язковими"})";
     }
 
@@ -221,7 +251,8 @@ std::string ApiController::handleVote(const std::map<std::string, std::string>& 
     int matchId = std::stoi(matchIt->second);
     int playerId = std::stoi(playerIt->second);
     std::string error;
-    if (!m_service.recordVote(matchId, playerId, error)) {
+    if (!m_service.recordVote(matchId, playerId, error))
+    {
         std::ostringstream json;
         json << "{"
              << "\"status\":\"error\","
@@ -233,15 +264,18 @@ std::string ApiController::handleVote(const std::map<std::string, std::string>& 
     return R"({"status":"success","message":"Голос зараховано"})";
 }
 
-std::string ApiController::handleCloseMatch(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleCloseMatch(const std::map<std::string, std::string> &body) const
+{
     const auto matchIt = body.find("match_id");
-    if (matchIt == body.end()) {
+    if (matchIt == body.end())
+    {
         return R"({"status":"error","message":"match_id є обов'язковим"})";
     }
 
     int matchId = std::stoi(matchIt->second);
     std::string error;
-    if (!m_service.closeMatch(matchId, error)) {
+    if (!m_service.closeMatch(matchId, error))
+    {
         std::ostringstream json;
         json << "{"
              << "\"status\":\"error\","
@@ -253,22 +287,26 @@ std::string ApiController::handleCloseMatch(const std::map<std::string, std::str
     return R"({"status":"success","message":"Матч завершено"})";
 }
 
-std::string ApiController::handleSetMatchActive(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleSetMatchActive(const std::map<std::string, std::string> &body) const
+{
     const auto matchIt = body.find("match_id");
     const auto activeIt = body.find("is_active");
-    
-    if (matchIt == body.end()) {
+
+    if (matchIt == body.end())
+    {
         return R"({"status":"error","message":"match_id є обов'язковим"})";
     }
-    if (activeIt == body.end()) {
+    if (activeIt == body.end())
+    {
         return R"({"status":"error","message":"is_active є обов'язковим"})";
     }
 
     int matchId = std::stoi(matchIt->second);
     bool isActive = (activeIt->second == "1" || activeIt->second == "true");
-    
+
     std::string error;
-    if (!m_service.setMatchActive(matchId, isActive, error)) {
+    if (!m_service.setMatchActive(matchId, isActive, error))
+    {
         std::ostringstream json;
         json << "{"
              << "\"status\":\"error\","
@@ -277,70 +315,89 @@ std::string ApiController::handleSetMatchActive(const std::map<std::string, std:
         return json.str();
     }
 
-    return isActive ? R"({"status":"success","message":"Матч активовано"})" 
+    return isActive ? R"({"status":"success","message":"Матч активовано"})"
                     : R"({"status":"success","message":"Матч закрито"})";
 }
 
-std::string ApiController::handleUpdateMatchStats(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleUpdateMatchStats(const std::map<std::string, std::string> &body) const
+{
     const auto matchIt = body.find("match_id");
-    if (matchIt == body.end()) {
+    if (matchIt == body.end())
+    {
         return R"({"status":"error","message":"match_id є обов'язковим"})";
     }
 
     int matchId = std::stoi(matchIt->second);
     MatchStats stats = m_service.getMatchStats(matchId);
-    
+
     // Update stats from body
     auto it = body.find("team1_possession");
-    if (it != body.end()) stats.team1Possession = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1Possession = std::stoi(it->second);
+
     it = body.find("team2_possession");
-    if (it != body.end()) stats.team2Possession = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2Possession = std::stoi(it->second);
+
     it = body.find("team1_shots");
-    if (it != body.end()) stats.team1Shots = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1Shots = std::stoi(it->second);
+
     it = body.find("team2_shots");
-    if (it != body.end()) stats.team2Shots = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2Shots = std::stoi(it->second);
+
     it = body.find("team1_shots_on_target");
-    if (it != body.end()) stats.team1ShotsOnTarget = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1ShotsOnTarget = std::stoi(it->second);
+
     it = body.find("team2_shots_on_target");
-    if (it != body.end()) stats.team2ShotsOnTarget = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2ShotsOnTarget = std::stoi(it->second);
+
     it = body.find("team1_corners");
-    if (it != body.end()) stats.team1Corners = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1Corners = std::stoi(it->second);
+
     it = body.find("team2_corners");
-    if (it != body.end()) stats.team2Corners = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2Corners = std::stoi(it->second);
+
     it = body.find("team1_fouls");
-    if (it != body.end()) stats.team1Fouls = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1Fouls = std::stoi(it->second);
+
     it = body.find("team2_fouls");
-    if (it != body.end()) stats.team2Fouls = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2Fouls = std::stoi(it->second);
+
     it = body.find("team1_yellow_cards");
-    if (it != body.end()) stats.team1YellowCards = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1YellowCards = std::stoi(it->second);
+
     it = body.find("team2_yellow_cards");
-    if (it != body.end()) stats.team2YellowCards = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2YellowCards = std::stoi(it->second);
+
     it = body.find("team1_red_cards");
-    if (it != body.end()) stats.team1RedCards = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1RedCards = std::stoi(it->second);
+
     it = body.find("team2_red_cards");
-    if (it != body.end()) stats.team2RedCards = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team2RedCards = std::stoi(it->second);
+
     it = body.find("team1_goals");
-    if (it != body.end()) stats.team1Goals = std::stoi(it->second);
-    
+    if (it != body.end())
+        stats.team1Goals = std::stoi(it->second);
+
     it = body.find("team2_goals");
-    if (it != body.end()) stats.team2Goals = std::stoi(it->second);
+    if (it != body.end())
+        stats.team2Goals = std::stoi(it->second);
 
     std::string error;
-    if (!m_service.updateMatchStats(matchId, stats, error)) {
+    if (!m_service.updateMatchStats(matchId, stats, error))
+    {
         std::ostringstream json;
         json << "{"
              << "\"status\":\"error\","
@@ -352,15 +409,18 @@ std::string ApiController::handleUpdateMatchStats(const std::map<std::string, st
     return R"({"status":"success","message":"Статистику оновлено"})";
 }
 
-std::string ApiController::handleDeleteMatch(const std::map<std::string, std::string>& body) const {
+std::string ApiController::handleDeleteMatch(const std::map<std::string, std::string> &body) const
+{
     const auto matchIt = body.find("match_id");
-    if (matchIt == body.end()) {
+    if (matchIt == body.end())
+    {
         return R"({"status":"error","message":"match_id є обов'язковим"})";
     }
 
     int matchId = std::stoi(matchIt->second);
     std::string error;
-    if (!m_service.deleteMatch(matchId, error)) {
+    if (!m_service.deleteMatch(matchId, error))
+    {
         std::ostringstream json;
         json << "{"
              << "\"status\":\"error\","
@@ -372,7 +432,8 @@ std::string ApiController::handleDeleteMatch(const std::map<std::string, std::st
     return R"({"status":"success","message":"Матч видалено"})";
 }
 
-std::string ApiController::handleGetMatchStats(int matchId) const {
+std::string ApiController::handleGetMatchStats(int matchId) const
+{
     MatchStats stats = m_service.getMatchStats(matchId);
     std::ostringstream json;
     json << "{"
@@ -397,29 +458,33 @@ std::string ApiController::handleGetMatchStats(int matchId) const {
     return json.str();
 }
 
-std::string ApiController::handleDashboardGet(int matchId) const {
+std::string ApiController::handleDashboardGet(int matchId) const
+{
     // Get all data in one call
     auto teams = m_service.listTeams();
     auto players = m_service.listPlayers();
     auto matches = m_service.listMatches();
     const auto stats = m_service.collectStats();
-    
+
     std::ostringstream json;
     json << "{";
-    
+
     // Teams
     json << "\"teams\":[";
-    for (std::size_t i = 0; i < teams.size(); ++i) {
-        const auto& t = teams[i];
+    for (std::size_t i = 0; i < teams.size(); ++i)
+    {
+        const auto &t = teams[i];
         json << "{\"id\":" << t.getId() << ",\"name\":\"" << escape(t.getName()) << "\"}";
-        if (i + 1 < teams.size()) json << ",";
+        if (i + 1 < teams.size())
+            json << ",";
     }
     json << "],";
-    
+
     // Players
     json << "\"players\":[";
-    for (std::size_t i = 0; i < players.size(); ++i) {
-        const auto& p = players[i];
+    for (std::size_t i = 0; i < players.size(); ++i)
+    {
+        const auto &p = players[i];
         json << "{"
              << "\"id\":" << p.getId() << ","
              << "\"name\":\"" << escape(p.getName()) << "\","
@@ -427,14 +492,16 @@ std::string ApiController::handleDashboardGet(int matchId) const {
              << "\"team_id\":" << p.getTeamId() << ","
              << "\"votes\":" << p.getVotes()
              << "}";
-        if (i + 1 < players.size()) json << ",";
+        if (i + 1 < players.size())
+            json << ",";
     }
     json << "],";
-    
+
     // Matches
     json << "\"matches\":[";
-    for (std::size_t i = 0; i < matches.size(); ++i) {
-        const auto& m = matches[i];
+    for (std::size_t i = 0; i < matches.size(); ++i)
+    {
+        const auto &m = matches[i];
         json << "{"
              << "\"id\":" << m.getId() << ","
              << "\"team1\":\"" << escape(m.getTeam1()) << "\","
@@ -444,53 +511,62 @@ std::string ApiController::handleDashboardGet(int matchId) const {
              << "\"team1_formation\":\"" << escape(m.getTeam1Formation()) << "\","
              << "\"team2_formation\":\"" << escape(m.getTeam2Formation()) << "\""
              << "}";
-        if (i + 1 < matches.size()) json << ",";
+        if (i + 1 < matches.size())
+            json << ",";
     }
     json << "],";
-    
+
     // Stats
     json << "\"stats\":{"
          << "\"total_players\":" << stats.totalPlayers << ","
          << "\"total_matches\":" << stats.totalMatches << ","
          << "\"total_votes\":" << stats.totalVotes
          << "}";
-    
+
     // Votes for selected match (or first match if matchId is 0)
     int selectedMatchId = matchId;
-    if (selectedMatchId == 0 && !matches.empty()) {
+    if (selectedMatchId == 0 && !matches.empty())
+    {
         selectedMatchId = matches[0].getId();
     }
-    
-    if (selectedMatchId > 0) {
+
+    if (selectedMatchId > 0)
+    {
         auto votes = m_service.votesForMatch(selectedMatchId);
         json << ",\"votes\":[";
         bool first = true;
-        for (const auto& [playerId, count] : votes) {
-            if (!first) json << ",";
+        for (const auto &[playerId, count] : votes)
+        {
+            if (!first)
+                json << ",";
             json << "{\"player_id\":" << playerId << ",\"votes\":" << count << "}";
             first = false;
         }
         json << "]";
-    } else {
+    }
+    else
+    {
         json << ",\"votes\":[]";
     }
-    
+
     json << "}";
     return json.str();
 }
 
-std::string ApiController::handleMatchesPageGet() const {
+std::string ApiController::handleMatchesPageGet() const
+{
     // Combined endpoint for matches page: matches + teams
     auto matches = m_service.listMatches();
     auto teams = m_service.listTeams();
-    
+
     std::ostringstream json;
     json << "{";
-    
+
     // Matches
     json << "\"matches\":[";
-    for (std::size_t i = 0; i < matches.size(); ++i) {
-        const auto& m = matches[i];
+    for (std::size_t i = 0; i < matches.size(); ++i)
+    {
+        const auto &m = matches[i];
         json << "{"
              << "\"id\":" << m.getId() << ","
              << "\"team1\":\"" << escape(m.getTeam1()) << "\","
@@ -500,35 +576,40 @@ std::string ApiController::handleMatchesPageGet() const {
              << "\"team1_formation\":\"" << escape(m.getTeam1Formation()) << "\","
              << "\"team2_formation\":\"" << escape(m.getTeam2Formation()) << "\""
              << "}";
-        if (i + 1 < matches.size()) json << ",";
+        if (i + 1 < matches.size())
+            json << ",";
     }
     json << "],";
-    
+
     // Teams
     json << "\"teams\":[";
-    for (std::size_t i = 0; i < teams.size(); ++i) {
-        const auto& t = teams[i];
+    for (std::size_t i = 0; i < teams.size(); ++i)
+    {
+        const auto &t = teams[i];
         json << "{\"id\":" << t.getId() << ",\"name\":\"" << escape(t.getName()) << "\"}";
-        if (i + 1 < teams.size()) json << ",";
+        if (i + 1 < teams.size())
+            json << ",";
     }
     json << "]";
-    
+
     json << "}";
     return json.str();
 }
 
-std::string ApiController::handlePlayersPageGet() const {
+std::string ApiController::handlePlayersPageGet() const
+{
     // Combined endpoint for players page: players + teams
     auto players = m_service.listPlayers();
     auto teams = m_service.listTeams();
-    
+
     std::ostringstream json;
     json << "{";
-    
+
     // Players
     json << "\"players\":[";
-    for (std::size_t i = 0; i < players.size(); ++i) {
-        const auto& p = players[i];
+    for (std::size_t i = 0; i < players.size(); ++i)
+    {
+        const auto &p = players[i];
         json << "{"
              << "\"id\":" << p.getId() << ","
              << "\"name\":\"" << escape(p.getName()) << "\","
@@ -536,50 +617,58 @@ std::string ApiController::handlePlayersPageGet() const {
              << "\"team_id\":" << p.getTeamId() << ","
              << "\"votes\":" << p.getVotes()
              << "}";
-        if (i + 1 < players.size()) json << ",";
+        if (i + 1 < players.size())
+            json << ",";
     }
     json << "],";
-    
+
     // Teams
     json << "\"teams\":[";
-    for (std::size_t i = 0; i < teams.size(); ++i) {
-        const auto& t = teams[i];
+    for (std::size_t i = 0; i < teams.size(); ++i)
+    {
+        const auto &t = teams[i];
         json << "{\"id\":" << t.getId() << ",\"name\":\"" << escape(t.getName()) << "\"}";
-        if (i + 1 < teams.size()) json << ",";
+        if (i + 1 < teams.size())
+            json << ",";
     }
     json << "]";
-    
+
     json << "}";
     return json.str();
 }
 
-std::string ApiController::handleStatsPageGet() const {
+std::string ApiController::handleStatsPageGet() const
+{
     // Combined endpoint for stats page: match-stats + top players
     const auto matchStats = m_service.collectMatchStats();
     auto players = m_service.listPlayers();
-    
+
     // OPTIMIZATION: Create map for O(1) player lookup instead of O(n) find_if
-    std::map<int, const Player*> playerMap;
-    for (const auto& p : players) {
+    std::map<int, const Player *> playerMap;
+    for (const auto &p : players)
+    {
         playerMap[p.getId()] = &p;
     }
-    
+
     // Sort players by votes and get top 10
     std::vector<std::pair<int, int>> playerVotes; // player_id, votes
-    playerVotes.reserve(players.size()); // Pre-allocate for better performance
-    for (const auto& p : players) {
+    playerVotes.reserve(players.size());          // Pre-allocate for better performance
+    for (const auto &p : players)
+    {
         playerVotes.push_back({p.getId(), p.getVotes()});
     }
-    std::sort(playerVotes.begin(), playerVotes.end(), 
-              [](const auto& a, const auto& b) { return a.second > b.second; });
-    
+    std::sort(playerVotes.begin(), playerVotes.end(),
+              [](const auto &a, const auto &b)
+              { return a.second > b.second; });
+
     std::ostringstream json;
     json << "{";
-    
+
     // Match stats
     json << "\"matches\":[";
-    for (std::size_t i = 0; i < matchStats.size(); ++i) {
-        const auto& ms = matchStats[i];
+    for (std::size_t i = 0; i < matchStats.size(); ++i)
+    {
+        const auto &ms = matchStats[i];
         json << "{"
              << "\"match_id\":" << ms.matchId << ","
              << "\"team1\":\"" << escape(ms.team1) << "\","
@@ -609,21 +698,24 @@ std::string ApiController::handleStatsPageGet() const {
              << "\"team1_goals\":" << ms.team1Goals << ","
              << "\"team2_goals\":" << ms.team2Goals
              << "}";
-        if (i + 1 < matchStats.size()) json << ",";
+        if (i + 1 < matchStats.size())
+            json << ",";
     }
     json << "],";
-    
+
     // Top 10 players - OPTIMIZATION: Use map lookup instead of find_if
     json << "\"top_players\":[";
     std::size_t topCount = std::min(playerVotes.size(), static_cast<std::size_t>(10));
-    for (std::size_t i = 0; i < topCount; ++i) {
+    for (std::size_t i = 0; i < topCount; ++i)
+    {
         int playerId = playerVotes[i].first;
         int votes = playerVotes[i].second;
-        
+
         // Use map for O(1) lookup instead of O(n) find_if
         auto playerIt = playerMap.find(playerId);
-        if (playerIt != playerMap.end()) {
-            const Player* p = playerIt->second;
+        if (playerIt != playerMap.end())
+        {
+            const Player *p = playerIt->second;
             json << "{"
                  << "\"id\":" << p->getId() << ","
                  << "\"name\":\"" << escape(p->getName()) << "\","
@@ -631,45 +723,55 @@ std::string ApiController::handleStatsPageGet() const {
                  << "\"team_id\":" << p->getTeamId() << ","
                  << "\"votes\":" << votes
                  << "}";
-            if (i + 1 < topCount) json << ",";
+            if (i + 1 < topCount)
+                json << ",";
         }
     }
     json << "]";
-    
+
     json << "}";
     return json.str();
 }
 
-std::string ApiController::escape(const std::string& value) {
+std::string ApiController::escape(const std::string &value)
+{
     std::ostringstream oss;
-    for (size_t i = 0; i < value.size(); ++i) {
+    for (size_t i = 0; i < value.size(); ++i)
+    {
         unsigned char ch = static_cast<unsigned char>(value[i]);
-        switch (ch) {
-            case '\"': oss << "\\\""; break;
-            case '\\': 
-                // Don't escape backslash if it's part of \uXXXX (already escaped sequence)
-                // Check if we have \u followed by hex digits
-                if (i + 5 < value.size() && value[i+1] == 'u' &&
-                    isxdigit(value[i+2]) && isxdigit(value[i+3]) && 
-                    isxdigit(value[i+4]) && isxdigit(value[i+5])) {
-                    // This is already an escape sequence, don't double-escape
-                    oss << ch;
-                } else {
-                    // Normal backslash, escape it
-                    oss << "\\\\";
-                }
-                break;
-            case '\n': oss << "\\n"; break;
-            case '\r': oss << "\\r"; break;
-            case '\t': oss << "\\t"; break;
-            default: oss << ch;
+        switch (ch)
+        {
+        case '\"':
+            oss << "\\\"";
+            break;
+        case '\\':
+            // Don't escape backslash if it's part of \uXXXX (already escaped sequence)
+            // Check if we have \u followed by hex digits
+            if (i + 5 < value.size() && value[i + 1] == 'u' &&
+                isxdigit(value[i + 2]) && isxdigit(value[i + 3]) &&
+                isxdigit(value[i + 4]) && isxdigit(value[i + 5]))
+            {
+                // This is already an escape sequence, don't double-escape
+                oss << ch;
+            }
+            else
+            {
+                // Normal backslash, escape it
+                oss << "\\\\";
+            }
+            break;
+        case '\n':
+            oss << "\\n";
+            break;
+        case '\r':
+            oss << "\\r";
+            break;
+        case '\t':
+            oss << "\\t";
+            break;
+        default:
+            oss << ch;
         }
     }
     return oss.str();
 }
-
-
-
-
-
-

@@ -38,7 +38,7 @@ def vote():
             "SELECT player_id FROM user_votes WHERE user_id = ? AND match_id = ?",
             (user_id, match_id)
         ).fetchone()
-        
+
         if existing_vote:
             return jsonify({
                 "status": "error",
@@ -62,11 +62,11 @@ def vote():
                 if match.get("match_id") == int(match_id):
                     current_match = match
                     break
-            
+
             if current_match:
                 if not current_match.get("is_active", True):
                     return jsonify({
-                        "status": "error", 
+                        "status": "error",
                         "message": "Цей матч закрито, голосування недоступне"
                     }), 403
             else:
@@ -78,11 +78,13 @@ def vote():
 
     # 1. First, send vote to C++ backend (main source of truth)
     try:
-        success, vote_response = _post("/vote", {"match_id": match_id, "player_id": player_id})
-        
+        success, vote_response = _post(
+            "/vote", {"match_id": match_id, "player_id": player_id})
+
         from flask import current_app
-        current_app.logger.info(f"C++ response: success={success}, vote_response={vote_response}")
-        
+        current_app.logger.info(
+            f"C++ response: success={success}, vote_response={vote_response}")
+
         if success and vote_response.get("status") == "success":
             # Vote accepted by C++ backend, now save to Flask DB for tracking
             db = get_db()
@@ -92,35 +94,38 @@ def vote():
                     (user_id, match_id, player_id)
                 )
                 db.commit()
-                
+
                 # Verify the insert worked
                 verify = db.execute(
                     "SELECT COUNT(*) as count FROM user_votes WHERE user_id = ? AND match_id = ?",
                     (user_id, match_id)
                 ).fetchone()
-                
+
                 from flask import current_app
                 current_app.logger.info(
                     f"Vote synced: user_id={user_id}, match_id={match_id}, player_id={player_id}, verify_count={verify['count']}")
             except sqlite3.IntegrityError as ie:
                 # Already voted locally, but C++ backend accepted it
                 from flask import current_app
-                current_app.logger.warning(f"IntegrityError on INSERT: {ie} - user_id={user_id}, match_id={match_id}")
+                current_app.logger.warning(
+                    f"IntegrityError on INSERT: {ie} - user_id={user_id}, match_id={match_id}")
                 db.rollback()
             except Exception as e:
                 from flask import current_app
-                current_app.logger.warning(f"Vote sent to backend but local save failed: {e}")
-            
+                current_app.logger.warning(
+                    f"Vote sent to backend but local save failed: {e}")
+
             return jsonify({"status": "success", "message": "Голос зараховано"})
         else:
             # C++ backend rejected the vote
-            error_msg = vote_response.get("message", "Помилка при голосуванні") if vote_response else "Помилка з'єднання з сервером"
+            error_msg = vote_response.get(
+                "message", "Помилка при голосуванні") if vote_response else "Помилка з'єднання з сервером"
             return jsonify({"status": "error", "message": error_msg}), 400
-            
+
     except Exception as e:
         from flask import current_app
         current_app.logger.error(f"Error sending vote to backend: {e}")
-        
+
         # Fallback: save locally only if backend is unavailable
         db = get_db()
         try:
@@ -130,7 +135,7 @@ def vote():
             )
             db.commit()
             return jsonify({
-                "status": "success", 
+                "status": "success",
                 "message": "Голос збережено локально (backend недоступний)"
             })
         except sqlite3.IntegrityError:
@@ -316,7 +321,8 @@ def match_votes_cpp(match_id):
             return jsonify({"match_id": match_id, "votes": []})
     except Exception as e:
         from flask import current_app
-        current_app.logger.error(f"Error getting match votes from C++ backend: {e}")
+        current_app.logger.error(
+            f"Error getting match votes from C++ backend: {e}")
         return jsonify({"match_id": match_id, "votes": []}), 500
 
 
@@ -330,7 +336,7 @@ def flask_stats():
         current_app.logger.info("flask_stats: calling _get('/api/stats')")
         stats = _get("/api/stats")
         current_app.logger.info(f"flask_stats: received stats = {stats}")
-        
+
         if stats:
             return jsonify(stats)
         else:
@@ -343,7 +349,8 @@ def flask_stats():
             })
     except Exception as e:
         from flask import current_app
-        current_app.logger.error(f"Error getting stats from backend: {e}", exc_info=True)
+        current_app.logger.error(
+            f"Error getting stats from backend: {e}", exc_info=True)
         return jsonify({
             "total_players": 0,
             "total_matches": 0,

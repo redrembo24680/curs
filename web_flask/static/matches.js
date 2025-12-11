@@ -356,7 +356,7 @@ async function loadMatchData(matchId) {
     // Get players
     const playersData = await api.get('/players', { players: [] });
     const allPlayers = playersData.players || [];
-    
+
     // Get votes for THIS SPECIFIC MATCH from C++ API
     const votesData = await fetch(`/api/match-votes-cpp/${matchId}`).then(r => r.json()).catch(() => ({ votes: [] }));
     const votesMap = {};

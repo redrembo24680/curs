@@ -19,10 +19,10 @@ def stats_page():
     try:
         # Get data from C++ backend
         stats_data = _get("/api/stats")
-        
+
         if not stats_data:
             return jsonify({"error": "Failed to fetch stats from backend"}), 500
-        
+
         # Get players data
         players_data = _get("/api/players")
         if not players_data:
@@ -30,12 +30,13 @@ def stats_page():
         else:
             # Sort players by votes
             players = players_data.get("players", [])
-            players_list = sorted(players, key=lambda p: p.get("votes", 0), reverse=True)[:20]
-        
+            players_list = sorted(players, key=lambda p: p.get(
+                "votes", 0), reverse=True)[:20]
+
         # Get matches data with full statistics
         matches_data = _get("/api/match-stats")
         matches_list = matches_data.get("matches", []) if matches_data else []
-        
+
         return jsonify({
             "top_players": players_list,
             "matches": matches_list,

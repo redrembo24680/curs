@@ -5,17 +5,18 @@ import os
 
 DB_PATH = 'web_flask/data/database.sqlite'
 
+
 def recreate_table():
     if not os.path.exists(DB_PATH):
         print(f"Database not found: {DB_PATH}")
         return
-    
+
     conn = sqlite3.connect(DB_PATH)
-    
+
     # Drop old table
     print("Dropping old user_votes table...")
     conn.execute("DROP TABLE IF EXISTS user_votes")
-    
+
     # Create new table with correct constraint
     print("Creating new user_votes table with UNIQUE(user_id, match_id)...")
     conn.execute("""
@@ -29,13 +30,14 @@ def recreate_table():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)
-    
+
     conn.commit()
     conn.close()
-    
+
     print("✓ Table recreated successfully!")
     print("  Constraint: UNIQUE(user_id, match_id)")
     print("  This means: One vote per user per match")
+
 
 if __name__ == '__main__':
     recreate_table()

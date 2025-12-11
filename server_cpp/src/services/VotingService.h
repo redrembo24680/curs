@@ -14,14 +14,15 @@
 #include "storage/SqliteStore.h"
 #include "IVoteService.h"
 
-class VotingService : public IVoteService {
+class VotingService : public IVoteService
+{
 public:
-    explicit VotingService(const std::string& dataDirectory);
+    explicit VotingService(const std::string &dataDirectory);
 
-    Team addTeam(const std::string& name);
-    Player addPlayer(const std::string& name, const std::string& position, int teamId);
-    Match addMatch(const std::string& team1, const std::string& team2, const std::string& team1Formation = "4-3-3", const std::string& team2Formation = "4-3-3");
-    bool recordVote(int matchId, int playerId, std::string& errorMessage) override;
+    Team addTeam(const std::string &name);
+    Player addPlayer(const std::string &name, const std::string &position, int teamId);
+    Match addMatch(const std::string &team1, const std::string &team2, const std::string &team1Formation = "4-3-3", const std::string &team2Formation = "4-3-3");
+    bool recordVote(int matchId, int playerId, std::string &errorMessage) override;
 
     std::vector<Team> listTeams() const;
     std::vector<Player> listPlayers() const;
@@ -29,10 +30,10 @@ public:
     std::map<int, int> votesForMatch(int matchId) const;
     Stats collectStats() const;
     std::vector<MatchStats> collectMatchStats() const;
-    bool closeMatch(int matchId, std::string& errorMessage);
-    bool setMatchActive(int matchId, bool isActive, std::string& errorMessage);
-    bool updateMatchStats(int matchId, const MatchStats& stats, std::string& errorMessage);
-    bool deleteMatch(int matchId, std::string& errorMessage);
+    bool closeMatch(int matchId, std::string &errorMessage);
+    bool setMatchActive(int matchId, bool isActive, std::string &errorMessage);
+    bool updateMatchStats(int matchId, const MatchStats &stats, std::string &errorMessage);
+    bool deleteMatch(int matchId, std::string &errorMessage);
     MatchStats getMatchStats(int matchId) const;
 
 private:
@@ -50,9 +51,3 @@ private:
     void persistUnlocked();
     static std::string makeTimestamp();
 };
-
-
-
-
-
-

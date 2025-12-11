@@ -58,10 +58,10 @@ async function checkAdminAccess() {
 function addAdminLinkToNav() {
     const navLinks = document.querySelector('.nav-links');
     if (!navLinks) return;
-    
+
     // Check if admin link already exists
     if (document.querySelector('.nav-links a[href="/admin"]')) return;
-    
+
     // Create admin link
     const li = document.createElement('li');
     const a = document.createElement('a');
@@ -69,7 +69,7 @@ function addAdminLinkToNav() {
     a.textContent = '⚙️ Адмін';
     a.className = window.location.pathname === '/admin' ? 'active' : '';
     li.appendChild(a);
-    
+
     // Insert before Profile link
     const profileLink = navLinks.querySelector('a[href="/profile"]');
     if (profileLink) {
